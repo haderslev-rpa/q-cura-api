@@ -6,25 +6,19 @@ from automation_server_client import AutomationServer, Credential  # klasse (AS-
 # -------------------------------------------------
 # Init Automation Server
 # -------------------------------------------------
-AutomationServer.from_environment()  # funktion (forbind til AS)
-credential = Credential.get_credential("API_CURA")  # objekt (credentials)
+AutomationServer.from_environment()
+credential = Credential.get_credential("API_CURA")
 
-cfg = credential.data  # dict (konfiguration)
+cfg = credential.data
 
 # -------------------------------------------------
 # Konfiguration (matcher Blue Prism)
 # -------------------------------------------------
-BASE_URL = cfg["base_url"]  
-# fx: https://haderslev.cura.columna.dk:20105/fhir-server/fhir/
+BASE_URL = cfg["base_url"]
 
 ACCESS_TOKEN_URL = cfg["access_token_url"]
-# /keycloak/generate-authentication-url?username=
-
 AUTH_USERINFO_URL = cfg["auth_userinfo"]
-# /auth/userinfo
-
 SESSION_TOKEN_URL = cfg["session_token_url"]
-# /auth/authorize
 
 ORG_ID = cfg["org_id"]
 USER_ROLE = cfg["user_role"]
@@ -36,7 +30,7 @@ USERNAME = credential.username
 PASSWORD = credential.password
 
 # -------------------------------------------------
-# Token cache (hukommelse)
+# Token cache
 # -------------------------------------------------
 _access_token = None
 _access_token_expiry = 0
@@ -44,19 +38,18 @@ _access_token_expiry = 0
 _session_token = None
 _session_token_expiry = 0
 
-TOKEN_BUFFER = 600  # sekunder
+TOKEN_BUFFER = 600
+
 
 # -------------------------------------------------
-# 1️⃣ Access token (Keycloak)
+# 1️⃣ Access token
 # -------------------------------------------------
 def _get_access_token():
-    """Henter og cacher access token."""  # funktion (genbrugelig kodeblok)
     global _access_token, _access_token_expiry
 
     if _access_token and time.time() < (_access_token_expiry - TOKEN_BUFFER):
         return _access_token
 
-    # Step 1: hent authentication URL (TEXT!)
     r1 = requests.get(
         f"{ACCESS_TOKEN_URL}{USERNAME}",
         headers={"Accept": "text/plain"},
@@ -66,7 +59,6 @@ def _get_access_token():
 
     authentication_url = r1.text.strip().strip('"')
 
-    # Step 2: login mod Keycloak
     r2 = requests.post(
         authentication_url,
         data={
@@ -89,12 +81,11 @@ def _get_access_token():
 
     return _access_token
 
+
 # -------------------------------------------------
-# 2️⃣ VIGTIGT: userinfo (CURA-krav)
+# 2️⃣ Validate userinfo
 # -------------------------------------------------
 def _validate_userinfo():
-    """Validerer access token mod CURA."""  # funktion (obligatorisk trin)
-
     access_token = _get_access_token()
 
     r = requests.get(
@@ -109,23 +100,23 @@ def _validate_userinfo():
 
     r.raise_for_status()
 
+
 # -------------------------------------------------
-# 3️⃣ Session token (CURA authorize)
+# 3️⃣ Session token
 # -------------------------------------------------
 def _get_session_token():
-    """Henter og cacher session token."""  # funktion (genbrugelig kodeblok)
     global _session_token, _session_token_expiry
 
     if _session_token and time.time() < (_session_token_expiry - TOKEN_BUFFER):
         return _session_token
 
-    access_token = _get_access_token()  # funktion (Keycloak token)
+    access_token = _get_access_token()
 
     r = requests.post(
         SESSION_TOKEN_URL,
         data={
             "organization": ORG_ID,
-            "userRole": USER_ROLE,        # ✅ Systemadministrator
+            "userRole": USER_ROLE,
             "apiVersion": API_VERSION,
         },
         headers={
@@ -137,9 +128,7 @@ def _get_session_token():
     )
 
     if r.status_code >= 300:
-        raise RuntimeError(
-            f"Session-token fejl {r.status_code}: {r.text}"
-        )
+        raise RuntimeError(f"Session-token fejl {r.status_code}: {r.text}")
 
     data = r.json()["sessionToken"]
     _session_token = data["tokenString"]
@@ -149,10 +138,9 @@ def _get_session_token():
 
 
 # -------------------------------------------------
-# Headers (fælles)
+# Headers
 # -------------------------------------------------
 def _auth_headers():
-    """Bygger headers til FHIR-kald."""  # funktion (hjælpefunktion)
     return {
         "Authorization": f"Bearer {_get_access_token()}",
         "CURA-API-KEY": CURA_API_KEY,
@@ -161,13 +149,17 @@ def _auth_headers():
 
 
 # -------------------------------------------------
-# Public GET (som Prisme)
+# ✅ GET
 # -------------------------------------------------
 def get(endpoint: str, raw: bool = False):
-    """GET request til CURA FHIR API."""  # funktion (offentligt API)
-
     url = f"{BASE_URL}{endpoint}"
+
     r = requests.get(url, headers=_auth_headers(), timeout=30)
+
+    print("\n--- GET DEBUG ---")
+    print("URL:", url)
+    print("Status:", r.status_code)
+
     r.raise_for_status()
 
     data = r.json()
@@ -175,8 +167,103 @@ def get(endpoint: str, raw: bool = False):
     if raw:
         return data
 
-    # FHIR: pak entry ud
     if isinstance(data, dict) and isinstance(data.get("entry"), list):
         return data["entry"]
 
     return data
+
+
+# -------------------------------------------------
+# ✅ POST
+# -------------------------------------------------
+def post(endpoint: str, body: dict, raw: bool = False):
+    url = f"{BASE_URL}{endpoint}"
+
+    r = requests.post(
+        url,
+        headers={
+            **_auth_headers(),
+            "Content-Type": "application/json"
+        },
+        json=body,
+        timeout=30,
+    )
+
+    print("\n--- POST DEBUG ---")
+    print("URL:", url)
+    print("Status:", r.status_code)
+    print("Response:", r.text)
+
+    r.raise_for_status()
+
+    # --------------------------------------------------------
+    # ✅ COMMON RESULT (fallback safe)
+    # --------------------------------------------------------
+    result = {
+        "success": True,
+        "status_code": r.status_code,
+        "location": r.headers.get("Location"),
+        "data": None,
+        "empty_response": False
+    }
+
+    # --------------------------------------------------------
+    # ✅ TOM RESPONSE (Cura normal opførsel)
+    # --------------------------------------------------------
+    if not r.text.strip():
+        result["empty_response"] = True
+        return result
+
+    # --------------------------------------------------------
+    # ✅ PRØV JSON
+    # --------------------------------------------------------
+    try:
+        data = r.json()
+        result["data"] = data
+
+        if raw:
+            return result
+
+        return data
+
+    except ValueError:
+        # 👉 fallback hvis det IKKE er JSON
+        result["data"] = r.text
+        result["non_json_response"] = True
+        return result
+
+# -------------------------------------------------
+# ✅ PATCH
+# -------------------------------------------------
+def put(endpoint: str, body: dict, raw: bool = False):
+    url = f"{BASE_URL}{endpoint}"
+
+    r = requests.put(
+        url,
+        headers={
+            **_auth_headers(),
+            "Content-Type": "application/json"
+        },
+        json=body,
+        timeout=30,
+    )
+
+    print("\n--- PUT DEBUG ---")
+    print("URL:", url)
+    print("Status:", r.status_code)
+    print("Response:", r.text)
+
+    r.raise_for_status()
+
+    if not r.text.strip():
+        return {
+            "success": True,
+            "status_code": r.status_code,
+            "empty_response": True
+        }
+
+    try:
+        data = r.json()
+        return {"success": True, "data": data, "status_code": r.status_code}
+    except:
+        return {"success": True, "data": r.text, "status_code": r.status_code}

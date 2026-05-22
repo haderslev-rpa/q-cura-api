@@ -9,6 +9,7 @@ def get_borger_by_cpr(cpr: str):
     Henter borger i CURA via CPR.
     """
 
+
     # --------------------------------------------------------
     # Fjern bindestreg (helt simpelt)
     # --------------------------------------------------------
