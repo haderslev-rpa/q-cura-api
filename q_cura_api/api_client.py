@@ -1,33 +1,37 @@
-import time  # modul (tid)
-import requests  # modul (HTTP-kald)
+import time
+import requests
 
-from automation_server_client import AutomationServer, Credential  # klasse (AS-klient)
+from automation_server_client import AutomationServer, Credential
 
 # -------------------------------------------------
 # Init Automation Server
 # -------------------------------------------------
 AutomationServer.from_environment()
-credential = Credential.get_credential("API_CURA")
-
-cfg = credential.data
 
 # -------------------------------------------------
-# Konfiguration (matcher Blue Prism)
+# Aktiv credential (default = PROD)
 # -------------------------------------------------
-BASE_URL = cfg["base_url"]
+_active_credential_name = "API_CURA"
 
-ACCESS_TOKEN_URL = cfg["access_token_url"]
-AUTH_USERINFO_URL = cfg["auth_userinfo"]
-SESSION_TOKEN_URL = cfg["session_token_url"]
+# -------------------------------------------------
+# Globale config variabler
+# -------------------------------------------------
+credential = None
+cfg = None
 
-ORG_ID = cfg["org_id"]
-USER_ROLE = cfg["user_role"]
-API_VERSION = cfg["api_version"]
+BASE_URL = None
+ACCESS_TOKEN_URL = None
+AUTH_USERINFO_URL = None
+SESSION_TOKEN_URL = None
 
-CURA_API_KEY = cfg["cura_api_key"]
+ORG_ID = None
+USER_ROLE = None
+API_VERSION = None
 
-USERNAME = credential.username
-PASSWORD = credential.password
+CURA_API_KEY = None
+
+USERNAME = None
+PASSWORD = None
 
 # -------------------------------------------------
 # Token cache
@@ -39,6 +43,55 @@ _session_token = None
 _session_token_expiry = 0
 
 TOKEN_BUFFER = 600
+
+
+# -------------------------------------------------
+# ✅ INIT CLIENT (meget vigtig)
+# -------------------------------------------------
+def _init_client():
+    global credential, cfg
+    global BASE_URL, ACCESS_TOKEN_URL, AUTH_USERINFO_URL, SESSION_TOKEN_URL
+    global ORG_ID, USER_ROLE, API_VERSION
+    global CURA_API_KEY, USERNAME, PASSWORD
+    global _access_token, _session_token
+
+    # 🔥 hent credential
+    credential = Credential.get_credential(_active_credential_name)
+    cfg = credential.data
+
+    # 🔥 opsæt config
+    BASE_URL = cfg["base_url"]
+    ACCESS_TOKEN_URL = cfg["access_token_url"]
+    AUTH_USERINFO_URL = cfg["auth_userinfo"]
+    SESSION_TOKEN_URL = cfg["session_token_url"]
+
+    ORG_ID = cfg["org_id"]
+    USER_ROLE = cfg["user_role"]
+    API_VERSION = cfg["api_version"]
+
+    CURA_API_KEY = cfg["cura_api_key"]
+
+    USERNAME = credential.username
+    PASSWORD = credential.password
+
+    # 🔥 reset tokens når vi skifter miljø
+    _access_token = None
+    _session_token = None
+
+    print(f"\n⚙️ Cura client initialiseret med credential: {_active_credential_name}")
+    print(f"🌐 Base URL: {BASE_URL}")
+
+
+# -------------------------------------------------
+# ✅ PUBLIC: SKIFT MILJØ
+# -------------------------------------------------
+def set_cura_credential(credential_name: str):
+    global _active_credential_name
+
+    _active_credential_name = credential_name
+
+    # 🔥 geninitialiser hele clienten
+    _init_client()
 
 
 # -------------------------------------------------
@@ -83,26 +136,7 @@ def _get_access_token():
 
 
 # -------------------------------------------------
-# 2️⃣ Validate userinfo
-# -------------------------------------------------
-def _validate_userinfo():
-    access_token = _get_access_token()
-
-    r = requests.get(
-        AUTH_USERINFO_URL,
-        headers={
-            "Authorization": f"Bearer {access_token}",
-            "CURA-API-KEY": CURA_API_KEY,
-            "Accept": "application/json",
-        },
-        timeout=30,
-    )
-
-    r.raise_for_status()
-
-
-# -------------------------------------------------
-# 3️⃣ Session token
+# 2️⃣ Session token
 # -------------------------------------------------
 def _get_session_token():
     global _session_token, _session_token_expiry
@@ -181,89 +215,53 @@ def post(endpoint: str, body: dict, raw: bool = False):
 
     r = requests.post(
         url,
-        headers={
-            **_auth_headers(),
-            "Content-Type": "application/json"
-        },
+        headers={**_auth_headers(), "Content-Type": "application/json"},
         json=body,
         timeout=30,
     )
 
     print("\n--- POST DEBUG ---")
-    print("URL:", url)
     print("Status:", r.status_code)
-    print("Response:", r.text)
 
     r.raise_for_status()
 
-    # --------------------------------------------------------
-    # ✅ COMMON RESULT (fallback safe)
-    # --------------------------------------------------------
-    result = {
-        "success": True,
-        "status_code": r.status_code,
-        "location": r.headers.get("Location"),
-        "data": None,
-        "empty_response": False
-    }
-
-    # --------------------------------------------------------
-    # ✅ TOM RESPONSE (Cura normal opførsel)
-    # --------------------------------------------------------
     if not r.text.strip():
-        result["empty_response"] = True
-        return result
+        return {"success": True, "status_code": r.status_code}
 
-    # --------------------------------------------------------
-    # ✅ PRØV JSON
-    # --------------------------------------------------------
     try:
-        data = r.json()
-        result["data"] = data
+        return r.json() if not raw else {"data": r.json()}
+    except:
+        return {"success": True, "data": r.text, "status_code": r.status_code}
 
-        if raw:
-            return result
-
-        return data
-
-    except ValueError:
-        # 👉 fallback hvis det IKKE er JSON
-        result["data"] = r.text
-        result["non_json_response"] = True
-        return result
 
 # -------------------------------------------------
-# ✅ PATCH
+# ✅ PUT
 # -------------------------------------------------
 def put(endpoint: str, body: dict, raw: bool = False):
     url = f"{BASE_URL}{endpoint}"
 
     r = requests.put(
         url,
-        headers={
-            **_auth_headers(),
-            "Content-Type": "application/json"
-        },
+        headers={**_auth_headers(), "Content-Type": "application/json"},
         json=body,
         timeout=30,
     )
 
     print("\n--- PUT DEBUG ---")
-    print("URL:", url)
     print("Status:", r.status_code)
-    print("Response:", r.text)
 
     r.raise_for_status()
 
     if not r.text.strip():
-        return {
-            "success": True,
-            "status_code": r.status_code,
-            "empty_response": True
-        }
+        return {"success": True, "status_code": r.status_code}
 
     try:
-        data = r.json()
-        return {"success": True, "data": data, "status_code": r.status_code}
+        return r.json() if not raw else {"data": r.json()}
     except:
         return {"success": True, "data": r.text, "status_code": r.status_code}
+
+
+# -------------------------------------------------
+# ✅ INIT KØRES AUTOMATISK
+# -------------------------------------------------
+_init_client()

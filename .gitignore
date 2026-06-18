@@ -2,4 +2,4 @@
 __pycache__/
 .env
 .vscode/
-test_local*/
+tests_local*/
