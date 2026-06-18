@@ -20,7 +20,7 @@ def delete_organization_from_citizen_by_org_id(
     # --------------------------------------------------------
     # 1. Hent alle relationer (parsed)
     # --------------------------------------------------------
-    from q_cura_api.borger_organisation_hent import get_organizations_for_citizen
+    from q_cura_api.functionality.borger_organisation_hent import get_organizations_for_citizen
     orgs = get_organizations_for_citizen(borger_id)
 
     if not orgs["found"]:

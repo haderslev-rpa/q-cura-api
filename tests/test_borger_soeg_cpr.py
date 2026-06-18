@@ -1,6 +1,6 @@
 from pprint import pprint  # funktion (pæn udskrift)
 from q_cura_api.api_client import set_cura_credential
-from q_cura_api.borger_soeg_cpr import get_borger_by_cpr  # funktion (borger-søgning)
+from q_cura_api.functionality.borger_soeg_cpr import get_borger_by_cpr  # funktion (borger-søgning)
 from automation_server_client import AutomationServer, Credential
 
 # -------------------------------------------------

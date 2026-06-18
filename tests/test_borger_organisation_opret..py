@@ -1,7 +1,7 @@
 from pprint import pprint
 from q_cura_api.api_client import set_cura_credential
-from q_cura_api.borger_soeg_cpr import get_borger_by_cpr
-from q_cura_api.borger_organisation_opret import add_organization_to_citizen
+from q_cura_api.functionality.borger_soeg_cpr import get_borger_by_cpr
+from q_cura_api.functionality.borger_organisation_opret import add_organization_to_citizen
 from automation_server_client import AutomationServer, Credential
 
 # -------------------------------------------------

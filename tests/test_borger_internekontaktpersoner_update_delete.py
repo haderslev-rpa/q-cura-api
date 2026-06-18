@@ -1,5 +1,5 @@
 from q_cura_api.api_client import set_cura_credential
-from q_cura_api.borger_interne_kontaktpersoner import update_internal_contact_deleted
+from q_cura_api.functionality.borger_interne_kontaktpersoner import update_internal_contact_deleted
 
 set_cura_credential("API_CURA_TEST")
 

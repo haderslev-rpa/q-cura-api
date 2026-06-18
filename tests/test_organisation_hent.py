@@ -1,6 +1,6 @@
 from pprint import pprint  # pæn udskrift
 from q_cura_api.api_client import set_cura_credential
-from q_cura_api.organisation_hent import get_organizations  # din funktion
+from q_cura_api.functionality.organisation_hent import get_organizations  # din funktion
 
 set_cura_credential("API_CURA_TEST")
 

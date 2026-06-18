@@ -1,6 +1,6 @@
 from pprint import pprint
-from q_cura_api.borger_soeg_cpr import get_borger_by_cpr
-from q_cura_api.borger_kontaktpersoner_hent import get_contacts_for_citizen
+from q_cura_api.functionality.borger_soeg_cpr import get_borger_by_cpr
+from q_cura_api.functionality.borger_kontaktpersoner_hent import get_contacts_for_citizen
 from q_cura_api.api_client import set_cura_credential
 from automation_server_client import AutomationServer, Credential
 

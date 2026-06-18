@@ -1,7 +1,7 @@
 from pprint import pprint
 from q_cura_api.api_client import set_cura_credential
-from q_cura_api.borger_soeg_cpr import get_borger_by_cpr
-from q_cura_api.borger_organisation_update import delete_organization_from_citizen_by_org_id
+from q_cura_api.functionality.borger_soeg_cpr import get_borger_by_cpr
+from q_cura_api.functionality.borger_organisation_update import delete_organization_from_citizen_by_org_id
 from automation_server_client import AutomationServer, Credential
 
 # -------------------------------------------------
