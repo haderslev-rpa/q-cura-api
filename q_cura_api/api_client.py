@@ -71,8 +71,22 @@ def _init_client():
 
     CURA_API_KEY = cfg["cura_api_key"]
 
-    USERNAME = credential.username
-    PASSWORD = credential.password
+    # -------------------------------------------------
+    # Login-oplysninger
+    # -------------------------------------------------
+    if _active_credential_name == "API_CURA":
+
+        # API_CURA indeholder kun JSON-config
+        dirxbla_credential = Credential.get_credential("DIRXBLA")
+
+        USERNAME = dirxbla_credential.username
+        PASSWORD = dirxbla_credential.password
+
+    else:
+
+        # Gammel adfærd for alle andre credentials
+        USERNAME = credential.username
+        PASSWORD = credential.password
 
     # 🔥 reset tokens når vi skifter miljø
     _access_token = None
@@ -80,7 +94,6 @@ def _init_client():
 
     print(f"\n⚙️ Cura client initialiseret med credential: {_active_credential_name}")
     print(f"🌐 Base URL: {BASE_URL}")
-
 
 # -------------------------------------------------
 # ✅ PUBLIC: SKIFT MILJØ
