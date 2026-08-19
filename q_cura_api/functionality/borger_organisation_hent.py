@@ -34,21 +34,35 @@ def get_organizations_for_citizen(borger_id: str, raw: bool = False):
     if isinstance(data, list) and len(data) > 0:
         result["found"] = True
 
-        for item in data:
-            resource = item.get("resource", {})
-            extensions = resource.get("extension", [])
+    for item in data:
 
-            org_ref = None
-            is_deleted = False
+        resource = item.get("resource", {})
+        extensions = resource.get("extension", [])
 
-            for ext in extensions:
-                url = ext.get("url", "")
+        org_ref = None
+        is_deleted = False
 
-                if url.endswith("/organization"):
-                    org_ref = ext.get("valueReference", {}).get("reference")
+        for ext in extensions:
+            url = ext.get("url", "")
 
-                if url.endswith("/deleted"):
-                    is_deleted = ext.get("valueBoolean", False)
+            if url.endswith("/organization"):
+                org_ref = ext.get("valueReference", {}).get("reference")
+
+            if url.endswith("/deleted"):
+                is_deleted = ext.get("valueBoolean", False)
+
+        relation_id = resource.get("id")
+
+        organization_id = None
+        if org_ref:
+            organization_id = org_ref.split("/")[-1]
+
+        result["organizationer"].append({
+            "relation_id": relation_id,
+            "organization_id": organization_id,
+            "organization_reference": org_ref,
+            "deleted": is_deleted
+        })
 
         relation_id = resource.get("id")
 

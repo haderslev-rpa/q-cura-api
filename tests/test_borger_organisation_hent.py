@@ -11,8 +11,8 @@ AutomationServer.from_environment()
 
 test_data_credential = Credential.get_credential("Q_CURA_API")
 
-TEST_CPR = test_data_credential.data["cpr-nancy"]  # 👈 dine testdata
-set_cura_credential("API_CURA_TEST")
+TEST_CPR = test_data_credential.data["cpr1"]  # 👈 dine testdata
+set_cura_credential("API_CURA")
 
 print("\n🚀 TEST: HENT RAW ORGANISATIONER (INGEN FILTER)")
 

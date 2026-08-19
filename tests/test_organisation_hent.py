@@ -4,7 +4,7 @@ from q_cura_api.functionality.organisation_hent import get_organizations  # din 
 
 set_cura_credential("API_CURA")
 
-TEST_SØGNING = "robot"  # 👈 dine testdata
+TEST_SØGNING = "Forebyggende Indsatser for Seniorer"  # 👈 dine testdata
 
 print("\n🚀 TEST: SØG ORGANISATIONER")
 
