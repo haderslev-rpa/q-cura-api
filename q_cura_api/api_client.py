@@ -92,8 +92,8 @@ def _init_client():
     _access_token = None
     _session_token = None
 
-    print(f"\n⚙️ Cura client initialiseret med credential: {_active_credential_name}")
-    print(f"🌐 Base URL: {BASE_URL}")
+    #print(f"\n⚙️ Cura client initialiseret med credential: {_active_credential_name}")
+    #print(f"🌐 Base URL: {BASE_URL}")
 
 # -------------------------------------------------
 # ✅ PUBLIC: SKIFT MILJØ
@@ -203,9 +203,9 @@ def get(endpoint: str, raw: bool = False):
 
     r = requests.get(url, headers=_auth_headers(), timeout=30)
 
-    print("\n--- GET DEBUG ---")
-    print("URL:", url)
-    print("Status:", r.status_code)
+    #print("\n--- GET DEBUG ---")
+    #print("URL:", url)
+    #print("Status:", r.status_code)
 
     r.raise_for_status()
 
@@ -233,8 +233,8 @@ def post(endpoint: str, body: dict, raw: bool = False):
         timeout=30,
     )
 
-    print("\n--- POST DEBUG ---")
-    print("Status:", r.status_code)
+    #print("\n--- POST DEBUG ---")
+    #print("Status:", r.status_code)
 
     r.raise_for_status()
 
@@ -260,8 +260,8 @@ def put(endpoint: str, body: dict, raw: bool = False):
         timeout=30,
     )
 
-    print("\n--- PUT DEBUG ---")
-    print("Status:", r.status_code)
+    #print("\n--- PUT DEBUG ---")
+    #print("Status:", r.status_code)
 
     r.raise_for_status()
 
