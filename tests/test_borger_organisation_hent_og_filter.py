@@ -11,12 +11,12 @@ AutomationServer.from_environment()
 
 test_data_credential = Credential.get_credential("Q_CURA_API")
 
-TEST_CPR = test_data_credential.data["cpr-nancy"]  # 👈 dine testdata
+TEST_CPR = test_data_credential.data["cpr1"]  # 👈 dine testdata
 
 
 set_cura_credential("API_CURA")
 
-TEST_ORGANIZATION_ID = "2fcf1a74-a8d6-4923-bcd8-f1b35a27f819" # 👈 dit organization id
+TEST_ORGANIZATION_ID = "9ead7d71-155c-4f2c-a564-c0fa2f88710f" # 👈 dit organization id
 #2fcf1a74-a8d6-4923-bcd8-f1b35a27f819  Id på robotorganisation
 
 print("\n🚀 TEST: HENT ORGANISATIONER + CHECK")

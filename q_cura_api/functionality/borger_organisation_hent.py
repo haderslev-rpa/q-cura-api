@@ -1,12 +1,42 @@
-
 from q_cura_api.api_client import get
+
 
 # ------------------------------------------------------------
 # HENT ORGANISATIONER FOR BORGER
 # ------------------------------------------------------------
-def get_organizations_for_citizen(borger_id: str, raw: bool = False):
+def get_organizations_for_citizen(
+    borger_id: str,
+    raw: bool = False,
+    include_deleted: bool = False,
+) -> dict:
     """
-    Henter alle AKTIVE organisationer for en borger.
+    Henter organisationer, som er tilknyttet en borger.
+
+    Standard:
+        include_deleted=False
+        Kun aktive organisationer returneres.
+
+    Hvis include_deleted=True:
+        Både aktive og slettede organisationer returneres.
+
+    Hvis raw=True:
+        Det rå svar fra Cura returneres direkte.
+        I raw-tilstand foretages der ikke filtrering på deleted.
+
+    Eksempel på normalt output:
+        {
+            "found": True,
+            "borger_id": "borger-id",
+            "include_deleted": False,
+            "organizationer": [
+                {
+                    "relation_id": "relation-id",
+                    "organization_id": "organization-id",
+                    "organization_reference": "Organization/organization-id",
+                    "deleted": False,
+                }
+            ],
+        }
     """
 
     endpoint = (
@@ -15,68 +45,81 @@ def get_organizations_for_citizen(borger_id: str, raw: bool = False):
         "&_profile=http://curafhir.dk/p/CitizenCareProvider"
     )
 
-    print("\n--- GET ORGANIZATIONS ---")
+    print("\n--- GET ORGANIZATIONS FOR CITIZEN ---")
     print("Borger ID:", borger_id)
     print("Endpoint:", endpoint)
     print("Raw:", raw)
+    print("Include deleted:", include_deleted)
 
     data = get(endpoint, raw=raw)
 
+    # Ved raw=True returneres Cura-svaret helt uændret.
     if raw:
         return data
 
     result = {
         "found": False,
         "borger_id": borger_id,
-        "organizationer": []
+        "include_deleted": include_deleted,
+        "organizationer": [],
     }
 
-    if isinstance(data, list) and len(data) > 0:
-        result["found"] = True
+    # Beskytter mod eksempelvis None eller et uventet dictionary-svar.
+    if not isinstance(data, list):
+        return result
 
     for item in data:
+        if not isinstance(item, dict):
+            continue
 
         resource = item.get("resource", {})
+
+        if not isinstance(resource, dict):
+            continue
+
         extensions = resource.get("extension", [])
 
-        org_ref = None
+        if not isinstance(extensions, list):
+            extensions = []
+
+        relation_id = resource.get("id")
+        organization_reference = None
         is_deleted = False
 
-        for ext in extensions:
-            url = ext.get("url", "")
+        for extension in extensions:
+            if not isinstance(extension, dict):
+                continue
 
-            if url.endswith("/organization"):
-                org_ref = ext.get("valueReference", {}).get("reference")
+            extension_url = str(extension.get("url") or "")
 
-            if url.endswith("/deleted"):
-                is_deleted = ext.get("valueBoolean", False)
+            if extension_url.endswith("/organization"):
+                organization_reference = (
+                    extension.get("valueReference", {}).get("reference")
+                )
 
-        relation_id = resource.get("id")
+            elif extension_url.endswith("/deleted"):
+                # Kun den faktiske boolske værdi True tæller som slettet.
+                is_deleted = extension.get("valueBoolean") is True
 
-        organization_id = None
-        if org_ref:
-            organization_id = org_ref.split("/")[-1]
-
-        result["organizationer"].append({
-            "relation_id": relation_id,
-            "organization_id": organization_id,
-            "organization_reference": org_ref,
-            "deleted": is_deleted
-        })
-
-        relation_id = resource.get("id")
+        # Slettede relationer udelades som standard.
+        if is_deleted and not include_deleted:
+            continue
 
         organization_id = None
-        if org_ref:
-            organization_id = org_ref.split("/")[-1]
 
+        if organization_reference:
+            organization_id = organization_reference.split("/")[-1]
 
-        result["organizationer"].append({
-            "relation_id": relation_id, # id på selve relationen (Basic ressourcen). Bruges til update/delete
-            "organization_id": organization_id,
-            "organization_reference": org_ref,
-            "deleted": is_deleted                   # ✅ MEGET vigtig
-        })
+        result["organizationer"].append(
+            {
+                "relation_id": relation_id,
+                "organization_id": organization_id,
+                "organization_reference": organization_reference,
+                "deleted": is_deleted,
+            }
+        )
 
+    # found betyder nu, at mindst én organisation bestod filtreringen.
+    result["found"] = len(result["organizationer"]) > 0
 
     return result
