@@ -39,12 +39,12 @@ def add_organization_to_citizen(borger_id: str, organization_id: str, raw: bool 
         ]
     }
 
-    print("\n--- CREATE ORGANIZATION ---")
-    print("Borger ID:", borger_id)
-    print("Organization ID:", organization_id)
-    print("Endpoint:", endpoint)
-    print("Body:", body)
-    print("Raw:", raw)
+    #print("\n--- CREATE ORGANIZATION ---")
+    #print("Borger ID:", borger_id)
+    #print("Organization ID:", organization_id)
+    #print("Endpoint:", endpoint)
+    #print("Body:", body)
+    #print("Raw:", raw)
 
     response = post(endpoint, body, raw=True)
 

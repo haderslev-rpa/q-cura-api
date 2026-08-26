@@ -24,10 +24,10 @@ def get_borger_by_cpr(cpr: str, raw: bool = False):
     # --------------------------------------------------------
     # DEBUG
     # --------------------------------------------------------
-    print("\n--- BUILD BORGER REQUEST ---")
-    print("CPR efter replace:", cpr)
-    print("Endpoint:", endpoint)
-    print("Raw:", raw)
+    #print("\n--- BUILD BORGER REQUEST ---")
+    #print("CPR efter replace:", cpr)
+    #print("Endpoint:", endpoint)
+   # print("Raw:", raw)
 
     data = get(endpoint, raw=raw)  # ✅ vigtigt
 

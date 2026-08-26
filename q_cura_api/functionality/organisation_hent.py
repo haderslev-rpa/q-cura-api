@@ -37,10 +37,10 @@ def get_organizations(search_name: str = None, raw: bool = False):
     # --------------------------------------------------------
     # DEBUG
     # --------------------------------------------------------
-    print("\n--- GET ORGANIZATIONS (SEARCH) ---")
-    print("Search:", search_name)
-    print("Endpoint:", endpoint)
-    print("Raw:", raw)
+    #print("\n--- GET ORGANIZATIONS (SEARCH) ---")
+    #print("Search:", search_name)
+    #print("Endpoint:", endpoint)
+    #print("Raw:", raw)
 
     data = get(endpoint, raw=raw)
 

@@ -17,7 +17,7 @@ def add_contact_to_citizen_safe(
     Tilføjer kontakt med fuld debug og breakpoint.
     """
 
-    print("\n--- SAFE CREATE CONTACT ---")
+    #print("\n--- SAFE CREATE CONTACT ---")
 
     # --------------------------------------------------------
     # 1. Hent original resource
@@ -73,16 +73,16 @@ def add_contact_to_citizen_safe(
     # --------------------------------------------------------
     # ✅ 4. DEBUG OUTPUT (MEGET VIGTIGT)
     # --------------------------------------------------------
-    print("\n--- ORIGINAL (FØR) ---")
-    print(json.dumps(original.get("contact", []), indent=2))
+    #print("\n--- ORIGINAL (FØR) ---")
+    #print(json.dumps(original.get("contact", []), indent=2))
 
-    print("\n--- UPDATED (EFTER) ---")
-    print(json.dumps(updated.get("contact", []), indent=2))
+    #print("\n--- UPDATED (EFTER) ---")
+    #print(json.dumps(updated.get("contact", []), indent=2))
 
-    print("\n✅ CHECK:")
-    print(f"- Antal før: {len(original.get('contact', []))}")
-    print(f"- Antal efter: {len(updated.get('contact', []))}")
-    print(f"- Ny contact_id: {contact_id}")
+    #print("\n✅ CHECK:")
+    #print(f"- Antal før: {len(original.get('contact', []))}")
+    #print(f"- Antal efter: {len(updated.get('contact', []))}")
+    #print(f"- Ny contact_id: {contact_id}")
 
     # --------------------------------------------------------
     # ✅ BREAKPOINT (STOP HER)

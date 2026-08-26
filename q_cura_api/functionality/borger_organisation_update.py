@@ -13,9 +13,9 @@ def delete_organization_from_citizen_by_org_id(
     og sender den tilbage med PUT.
     """
 
-    print("\n--- DELETE VIA ORGANIZATION ID (FULL PUT) ---")
-    print("Borger ID:", borger_id)
-    print("Organization ID:", organization_id)
+    #print("\n--- DELETE VIA ORGANIZATION ID (FULL PUT) ---")
+    #print("Borger ID:", borger_id)
+    #print("Organization ID:", organization_id)
 
     # --------------------------------------------------------
     # 1. Hent alle relationer (parsed)

@@ -11,10 +11,10 @@ def get_contacts_for_citizen(borger_id: str, raw: bool = False):
 
     endpoint = f"Patient/{borger_id}"
 
-    print("\n--- GET CONTACTS ---")
-    print("Borger ID:", borger_id)
-    print("Endpoint:", endpoint)
-    print("Raw:", raw)
+    #print("\n--- GET CONTACTS ---")
+    #print("Borger ID:", borger_id)
+    #print("Endpoint:", endpoint)
+    #print("Raw:", raw)
 
     data = get(endpoint, raw=True)  # ✅ altid raw
 

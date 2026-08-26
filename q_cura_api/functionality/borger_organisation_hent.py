@@ -45,11 +45,11 @@ def get_organizations_for_citizen(
         "&_profile=http://curafhir.dk/p/CitizenCareProvider"
     )
 
-    print("\n--- GET ORGANIZATIONS FOR CITIZEN ---")
-    print("Borger ID:", borger_id)
-    print("Endpoint:", endpoint)
-    print("Raw:", raw)
-    print("Include deleted:", include_deleted)
+    #print("\n--- GET ORGANIZATIONS FOR CITIZEN ---")
+    #print("Borger ID:", borger_id)
+    #print("Endpoint:", endpoint)
+    #print("Raw:", raw)
+    #print("Include deleted:", include_deleted)
 
     data = get(endpoint, raw=raw)
 
