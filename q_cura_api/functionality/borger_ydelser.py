@@ -27,11 +27,85 @@ EXTENSION_AID = (
 EXTENSION_REMARK = (
     "http://curafhir.dk/x/CuraGrantedProcedureRequest/remark"
 )
+EXTENSION_SERVICE_VARIANT = (
+    "http://curafhir.dk/x/ServiceVariant"
+)
 
 
 # ------------------------------------------------------------
 # INTERNE HJÆLPEFUNKTIONER
 # ------------------------------------------------------------
+def _get_service_variant(
+    extensions: list,
+) -> str:
+    """
+    Henter ydelsens variant fra ServiceVariant-extension.
+
+    CURA returnerer typisk varianten sådan:
+
+        {
+            "url": "http://curafhir.dk/x/ServiceVariant",
+            "valueCodeableConcept": {
+                "text": "Indlæg fodtøj"
+            }
+        }
+
+    Output:
+        Variantteksten, eksempelvis:
+
+            "Indlæg fodtøj"
+
+        Tom tekst, hvis ServiceVariant ikke findes,
+        eller hvis extensionen ikke indeholder tekst.
+    """
+    service_variant_extension = _find_extension(
+        extensions,
+        EXTENSION_SERVICE_VARIANT,
+    )
+
+    if not service_variant_extension:
+        return ""
+
+    codeable_concept = (
+        service_variant_extension.get(
+            "valueCodeableConcept",
+            {},
+        )
+    )
+
+    if not isinstance(
+        codeable_concept,
+        dict,
+    ):
+        return ""
+
+    # Førstevalg er valueCodeableConcept.text.
+    variant_text = str(
+        codeable_concept.get(
+            "text",
+            "",
+        )
+        or ""
+    ).strip()
+
+    if variant_text:
+        return variant_text
+
+    # Reserve, hvis CURA på nogle ydelser returnerer
+    # varianten i valueCodeableConcept.coding.
+    variant_display = _get_first_coding_value(
+        codeable_concept,
+        "display",
+    )
+
+    return str(
+        variant_display
+        or ""
+    ).strip()
+
+
+
+
 def _find_extension(
     extensions: list,
     extension_url: str,
@@ -427,23 +501,58 @@ def _normaliser_ydelse(
     """
     Omdanner én ProcedureRequest til en læsevenlig dictionary.
 
-    Output:
-        Dictionary med de eksisterende standardfelter samt:
+    Hvis ydelsen har en ServiceVariant, tilføjes varianten
+    til ydelsesnavnet i parentes.
 
+    Eksempel:
+
+        Grundnavn:
+            "Kropsbårne hjælpemidler § 112"
+
+        ServiceVariant:
+            "Indlæg fodtøj"
+
+        Samlet ydelsesnavn:
+            "Kropsbårne hjælpemidler § 112 "
+            "(Indlæg fodtøj)"
+
+    Hvis ServiceVariant ikke findes, bevares det oprindelige
+    ydelsesnavn uændret.
+
+    Output:
+        Dictionary med eksisterende standardfelter samt:
+
+        - ydelsesnavn
+        - ydelsesnavn_grundnavn
+        - service_variant
         - performer_reference
         - organization_id
         - performer_name
         - bemærkninger
-
-        Hele den oprindelige Cura-resource bevares i raw_resource.
+        - raw_resource
     """
+    if not isinstance(
+        resource,
+        dict,
+    ):
+        raise TypeError(
+            "resource skal være en dictionary."
+        )
+
     extensions = resource.get(
         "extension",
         [],
     )
 
-    if not isinstance(extensions, list):
+    if not isinstance(
+        extensions,
+        list,
+    ):
         extensions = []
+
+    # --------------------------------------------------------
+    # PERIODE
+    # --------------------------------------------------------
 
     period_extension = _find_extension(
         extensions,
@@ -455,8 +564,15 @@ def _normaliser_ydelse(
         {},
     )
 
-    if not isinstance(period, dict):
+    if not isinstance(
+        period,
+        dict,
+    ):
         period = {}
+
+    # --------------------------------------------------------
+    # EKSISTERENDE EXTENSIONS
+    # --------------------------------------------------------
 
     case_type_extension = _find_extension(
         extensions,
@@ -478,6 +594,56 @@ def _normaliser_ydelse(
         EXTENSION_RATE_UNIT,
     )
 
+    # --------------------------------------------------------
+    # YDELSESNAVN OG SERVICEVARIANT
+    # --------------------------------------------------------
+
+    ydelsesnavn_grundnavn = str(
+        _get_first_coding_value(
+            resource.get(
+                "code",
+                {},
+            ),
+            "display",
+        )
+        or ""
+    ).strip()
+
+    service_variant = (
+        _get_service_variant(
+            extensions
+        )
+    )
+
+    # Tilføj kun varianten, hvis den findes.
+    #
+    # Kontrollen forhindrer samtidig, at varianten
+    # bliver tilføjet to gange, hvis API-data på et
+    # tidspunkt allerede indeholder varianten i navnet.
+    ydelsesnavn = ydelsesnavn_grundnavn
+
+    if service_variant:
+        variant_i_parentes = (
+            f"({service_variant})"
+        )
+
+        if (
+            variant_i_parentes.casefold()
+            not in ydelsesnavn.casefold()
+        ):
+            ydelsesnavn = " ".join(
+                value
+                for value in (
+                    ydelsesnavn_grundnavn,
+                    variant_i_parentes,
+                )
+                if value
+            )
+
+    # --------------------------------------------------------
+    # META OG PERFORMER
+    # --------------------------------------------------------
+
     meta_data = _get_meta_data(
         resource.get(
             "meta",
@@ -485,66 +651,101 @@ def _normaliser_ydelse(
         )
     )
 
-    performer_data = _get_performer_data(
-        resource.get("performer")
+    performer_data = (
+        _get_performer_data(
+            resource.get(
+                "performer"
+            )
+        )
     )
+
+    # --------------------------------------------------------
+    # NORMALISERET YDELSE
+    # --------------------------------------------------------
 
     ydelse = {
         "id": resource.get(
             "id",
             "",
         ),
-        "ydelsesnavn": _get_first_coding_value(
-            resource.get(
+
+        # Det samlede navn, som svarer til visningen
+        # i CURA-brugergrænsefladen.
+        "ydelsesnavn": ydelsesnavn,
+
+        # Grundnavnet bevares separat, hvis andre
+        # processer fortsat har brug for det.
+        "ydelsesnavn_grundnavn": (
+            ydelsesnavn_grundnavn
+        ),
+
+        # Varianten bevares også som selvstændigt felt.
+        "service_variant": (
+            service_variant
+        ),
+
+        "ydelseskode": (
+            _get_first_coding_value(
+                resource.get(
+                    "code",
+                    {},
+                ),
                 "code",
-                {},
-            ),
-            "display",
+            )
         ),
-        "ydelseskode": _get_first_coding_value(
-            resource.get(
-                "code",
-                {},
-            ),
-            "code",
+
+        "sagstype": (
+            case_type_extension.get(
+                "valueString",
+                "",
+            )
         ),
-        "sagstype": case_type_extension.get(
-            "valueString",
-            "",
+
+        "paragraf": (
+            paragraph_extension.get(
+                "valueString",
+                "",
+            )
         ),
-        "paragraf": paragraph_extension.get(
-            "valueString",
-            "",
-        ),
+
         "startdato": period.get(
             "start",
             "",
         ),
+
         "slutdato": period.get(
             "end",
             "",
         ),
+
         "status": resource.get(
             "status",
             "",
         ),
 
-        # Nye performer-felter.
-        # organization_id bevarer samme navn som i den eksisterende kode.
-        "performer_reference": performer_data.get(
-            "performer_reference",
-            "",
-        ),
-        "organization_id": performer_data.get(
-            "organization_id",
-            "",
-        ),
-        "performer_name": performer_data.get(
-            "performer_name",
-            "",
+        # Performer-oplysninger.
+        "performer_reference": (
+            performer_data.get(
+                "performer_reference",
+                "",
+            )
         ),
 
-        # Nyt normaliseret felt fra remark-extension.
+        "organization_id": (
+            performer_data.get(
+                "organization_id",
+                "",
+            )
+        ),
+
+        "performer_name": (
+            performer_data.get(
+                "performer_name",
+                "",
+            )
+        ),
+
+        # Bemærkninger fra remark-extension.
         "bemærkninger": _get_remark(
             extensions
         ),
@@ -553,27 +754,40 @@ def _normaliser_ydelse(
             "valueDecimal",
             "",
         ),
-        "takstenhed": rate_unit_extension.get(
-            "valueCode",
-            "",
-        ),
-        "oprettet_dato": meta_data.get(
-            "oprettet_dato",
-            "",
-        ),
-        "oprettet_af": meta_data.get(
-            "oprettet_af",
-            "",
-        ),
-        "borger_id": _get_reference_id(
-            resource.get("subject")
+
+        "takstenhed": (
+            rate_unit_extension.get(
+                "valueCode",
+                "",
+            )
         ),
 
-        # Hele den originale ProcedureRequest fra Cura bevares her.
-        # Intet bliver gemt på disk.
+        "oprettet_dato": (
+            meta_data.get(
+                "oprettet_dato",
+                "",
+            )
+        ),
+
+        "oprettet_af": (
+            meta_data.get(
+                "oprettet_af",
+                "",
+            )
+        ),
+
+        "borger_id": _get_reference_id(
+            resource.get(
+                "subject"
+            )
+        ),
+
+        # Hele den oprindelige ProcedureRequest
+        # bevares uændret.
         "raw_resource": resource,
     }
 
+    # Bevar alle eksisterende HMI-felter.
     ydelse.update(
         _get_aid_data(
             extensions
