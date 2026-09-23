@@ -4,14 +4,15 @@ from q_cura_api.functionality.organisation_hent import get_organizations  # din 
 
 set_cura_credential("API_CURA")
 
-TEST_SØGNING = "Forebyggende Indsatser for Seniorer"  # 👈 dine testdata
+#TEST_SØGNING = "(Hjælpemidler) Frit valg"  # 👈 dine testdata
+TEST_SØGNING = "*(Hjælpemidler)*"  # 👈 dine testdata
 
 print("\n🚀 TEST: SØG ORGANISATIONER")
 
 # --------------------------------------------------------
 # Kør søgning
 # --------------------------------------------------------
-result = get_organizations(TEST_SØGNING)
+result = get_organizations(TEST_SØGNING, raw=False, include_inactive=True)
 
 # --------------------------------------------------------
 # Print resultat
