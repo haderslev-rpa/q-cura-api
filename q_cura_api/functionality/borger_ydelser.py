@@ -6,20 +6,36 @@ from q_cura_api.api_client import get
 # ------------------------------------------------------------
 PROFILE = "http://curafhir.dk/p/CuraGrantedProcedureRequest"
 
-EXTENSION_PERIOD = "http://curafhir.dk/x/CuraGrantedProcedureRequest/period"
-EXTENSION_CASE_TYPE = "http://curafhir.dk/x/CuraGrantedProcedureRequest/caseType"
+EXTENSION_PERIOD = (
+    "http://curafhir.dk/x/CuraGrantedProcedureRequest/period"
+)
+EXTENSION_CASE_TYPE = (
+    "http://curafhir.dk/x/CuraGrantedProcedureRequest/caseType"
+)
 EXTENSION_LEGAL_PARAGRAPH = (
     "http://curafhir.dk/x/CuraGrantedProcedureRequest/legalParagraph"
 )
-EXTENSION_RATE = "http://curafhir.dk/x/CuraGrantedProcedureRequest/rate"
-EXTENSION_RATE_UNIT = "http://curafhir.dk/x/CuraGrantedProcedureRequest/rateUnit"
-EXTENSION_AID = "http://curafhir.dk/x/CuraGrantedProcedureRequest/aid"
+EXTENSION_RATE = (
+    "http://curafhir.dk/x/CuraGrantedProcedureRequest/rate"
+)
+EXTENSION_RATE_UNIT = (
+    "http://curafhir.dk/x/CuraGrantedProcedureRequest/rateUnit"
+)
+EXTENSION_AID = (
+    "http://curafhir.dk/x/CuraGrantedProcedureRequest/aid"
+)
+EXTENSION_REMARK = (
+    "http://curafhir.dk/x/CuraGrantedProcedureRequest/remark"
+)
 
 
 # ------------------------------------------------------------
 # INTERNE HJÆLPEFUNKTIONER
 # ------------------------------------------------------------
-def _find_extension(extensions: list, extension_url: str) -> dict:
+def _find_extension(
+    extensions: list,
+    extension_url: str,
+) -> dict:
     """
     Finder en Cura-extension ud fra dens fulde URL.
 
@@ -27,7 +43,6 @@ def _find_extension(extensions: list, extension_url: str) -> dict:
         Extension som dictionary, hvis den findes.
         Tom dictionary, hvis den ikke findes.
     """
-
     if not isinstance(extensions, list):
         return {}
 
@@ -41,7 +56,10 @@ def _find_extension(extensions: list, extension_url: str) -> dict:
     return {}
 
 
-def _find_extension_by_url_end(data, url_end: str) -> dict:
+def _find_extension_by_url_end(
+    data,
+    url_end: str,
+) -> dict:
     """
     Søger rekursivt i dictionaries og lister efter en extension.
 
@@ -49,7 +67,6 @@ def _find_extension_by_url_end(data, url_end: str) -> dict:
         Første extension, hvis URL slutter med url_end.
         Tom dictionary, hvis den ikke findes.
     """
-
     if isinstance(data, dict):
         url = str(data.get("url") or "")
 
@@ -57,14 +74,20 @@ def _find_extension_by_url_end(data, url_end: str) -> dict:
             return data
 
         for value in data.values():
-            found = _find_extension_by_url_end(value, url_end)
+            found = _find_extension_by_url_end(
+                value,
+                url_end,
+            )
 
             if found:
                 return found
 
     elif isinstance(data, list):
         for value in data:
-            found = _find_extension_by_url_end(value, url_end)
+            found = _find_extension_by_url_end(
+                value,
+                url_end,
+            )
 
             if found:
                 return found
@@ -72,7 +95,42 @@ def _find_extension_by_url_end(data, url_end: str) -> dict:
     return {}
 
 
-def _get_reference_id(reference_data) -> str:
+def _get_reference(
+    reference_data,
+) -> str:
+    """
+    Henter hele FHIR-referencen.
+
+    Eksempler:
+        "Organization/456" returneres uændret.
+        {"reference": "Organization/456"} bliver til
+        "Organization/456".
+
+    Output:
+        Hele referencen som tekst eller tom tekst.
+    """
+    if isinstance(reference_data, str):
+        return reference_data.strip()
+
+    if isinstance(reference_data, dict):
+        return str(
+            reference_data.get("reference")
+            or ""
+        ).strip()
+
+    if isinstance(reference_data, list):
+        for item in reference_data:
+            reference = _get_reference(item)
+
+            if reference:
+                return reference
+
+    return ""
+
+
+def _get_reference_id(
+    reference_data,
+) -> str:
     """
     Henter ID fra en FHIR-reference.
 
@@ -83,32 +141,92 @@ def _get_reference_id(reference_data) -> str:
     Output:
         ID som tekst eller tom tekst.
     """
-
-    reference = ""
-
-    if isinstance(reference_data, str):
-        reference = reference_data
-
-    elif isinstance(reference_data, dict):
-        reference = str(reference_data.get("reference") or "")
-
-    elif isinstance(reference_data, list):
-        for item in reference_data:
-            if not isinstance(item, dict):
-                continue
-
-            reference = str(item.get("reference") or "")
-
-            if reference:
-                break
+    reference = _get_reference(
+        reference_data
+    )
 
     if not reference:
         return ""
 
-    return reference.split("/")[-1]
+    return reference.rstrip("/").split("/")[-1]
 
 
-def _get_first_coding_value(code_data: dict, field_name: str):
+def _get_reference_display(
+    reference_data,
+) -> str:
+    """
+    Henter display-navn fra en FHIR-reference.
+
+    Eksempel:
+        {
+            "reference": "Organization/456",
+            "display": "(Hjælpemidler) Leverandør A/S",
+        }
+
+    Output:
+        Display-navnet eller tom tekst.
+    """
+    if isinstance(reference_data, dict):
+        return str(
+            reference_data.get("display")
+            or ""
+        ).strip()
+
+    if isinstance(reference_data, list):
+        for item in reference_data:
+            display = _get_reference_display(item)
+
+            if display:
+                return display
+
+    return ""
+
+
+def _get_performer_data(
+    performer_data,
+) -> dict:
+    """
+    Henter performer-oplysninger fra en ProcedureRequest.
+
+    Feltet performer kan mangle eller være en dictionary/liste.
+    Manglende værdier returneres som tom tekst, så eksisterende
+    ydelser uden performer fortsat kan normaliseres.
+
+    Output:
+        {
+            "performer_reference": "Organization/<id>",
+            "organization_id": "<id>",
+            "performer_name": "<display-navn>",
+        }
+    """
+    performer_reference = _get_reference(
+        performer_data
+    )
+
+    organization_id = ""
+
+    if performer_reference.startswith(
+        "Organization/"
+    ):
+        organization_id = _get_reference_id(
+            performer_reference
+        )
+
+    performer_name = _get_reference_display(
+        performer_data
+    )
+
+    return {
+        "performer_reference": performer_reference,
+        "organization_id": organization_id,
+        "performer_name": performer_name,
+    }
+
+
+def _get_first_coding_value(
+    code_data: dict,
+    field_name: str,
+):
     """
     Henter en værdi fra det første element i code.coding.
 
@@ -116,7 +234,6 @@ def _get_first_coding_value(code_data: dict, field_name: str):
         Værdien fra eksempelvis display eller code.
         Tom tekst, hvis værdien ikke findes.
     """
-
     if not isinstance(code_data, dict):
         return ""
 
@@ -137,22 +254,29 @@ def _get_first_coding_value(code_data: dict, field_name: str):
     return ""
 
 
-def _get_meta_data(meta: dict) -> dict:
+def _get_meta_data(
+    meta: dict,
+) -> dict:
     """
     Henter kendte oplysninger fra ydelsens meta-data.
 
     Output:
         Dictionary med oprettet_dato og oprettet_af.
     """
-
     if not isinstance(meta, dict):
         return {
             "oprettet_dato": "",
             "oprettet_af": "",
         }
 
-    created_extension = _find_extension_by_url_end(meta, "/timestamp")
-    user_extension = _find_extension_by_url_end(meta, "/user")
+    created_extension = _find_extension_by_url_end(
+        meta,
+        "/timestamp",
+    )
+    user_extension = _find_extension_by_url_end(
+        meta,
+        "/user",
+    )
 
     oprettet_dato = (
         created_extension.get("valueInstant")
@@ -161,7 +285,10 @@ def _get_meta_data(meta: dict) -> dict:
     )
 
     oprettet_af = _get_reference_id(
-        user_extension.get("valueReference", {})
+        user_extension.get(
+            "valueReference",
+            {},
+        )
     )
 
     return {
@@ -170,7 +297,36 @@ def _get_meta_data(meta: dict) -> dict:
     }
 
 
-def _get_aid_data(extensions: list) -> dict:
+def _get_remark(
+    extensions: list,
+) -> str:
+    """
+    Henter Bemærkninger fra remark-extension.
+
+    Funktionen bruger den eksisterende direkte extension-liste
+    og ændrer ikke behandlingen af andre extensions.
+
+    Output:
+        Bemærkningsteksten fra valueString.
+        Tom tekst, hvis remark ikke findes.
+    """
+    remark_extension = _find_extension(
+        extensions,
+        EXTENSION_REMARK,
+    )
+
+    if not remark_extension:
+        return ""
+
+    return str(
+        remark_extension.get("valueString")
+        or ""
+    ).strip()
+
+
+def _get_aid_data(
+    extensions: list,
+) -> dict:
     """
     Henter kendte hjælpemiddeloplysninger fra aid-extension.
 
@@ -178,7 +334,6 @@ def _get_aid_data(extensions: list) -> dict:
         Dictionary med HMI-oplysninger.
         Felterne er tomme, hvis ydelsen ikke er et hjælpemiddel.
     """
-
     result = {
         "hmi_status": "",
         "hmi_nummer": "",
@@ -190,12 +345,18 @@ def _get_aid_data(extensions: list) -> dict:
         "leveringsdato": "",
     }
 
-    aid_extension = _find_extension(extensions, EXTENSION_AID)
+    aid_extension = _find_extension(
+        extensions,
+        EXTENSION_AID,
+    )
 
     if not aid_extension:
         return result
 
-    aid_extensions = aid_extension.get("extension", [])
+    aid_extensions = aid_extension.get(
+        "extension",
+        [],
+    )
 
     if not isinstance(aid_extensions, list):
         return result
@@ -204,92 +365,220 @@ def _get_aid_data(extensions: list) -> dict:
         if not isinstance(extension, dict):
             continue
 
-        url = str(extension.get("url") or "")
+        url = str(
+            extension.get("url")
+            or ""
+        )
 
         if url.endswith("/status"):
-            result["hmi_status"] = extension.get("valueCode", "")
+            result["hmi_status"] = extension.get(
+                "valueCode",
+                "",
+            )
 
         elif url.endswith("/hmiNumber"):
-            result["hmi_nummer"] = extension.get("valueString", "")
+            result["hmi_nummer"] = extension.get(
+                "valueString",
+                "",
+            )
 
         elif url.endswith("/entityIdentifierDisplay"):
-            result["hmi_loebenummer"] = extension.get("valueString", "")
+            result["hmi_loebenummer"] = extension.get(
+                "valueString",
+                "",
+            )
 
         elif url.endswith("/hmiName"):
-            result["hmi_navn"] = extension.get("valueString", "")
+            result["hmi_navn"] = extension.get(
+                "valueString",
+                "",
+            )
 
         elif url.endswith("/hmiProductNumber"):
-            result["hmi_product_number"] = extension.get("valueInteger", "")
+            result["hmi_product_number"] = extension.get(
+                "valueInteger",
+                "",
+            )
 
         elif url.endswith("/isoGroupDescription"):
-            result["iso_group_beskrivelse"] = extension.get("valueString", "")
+            result["iso_group_beskrivelse"] = extension.get(
+                "valueString",
+                "",
+            )
 
         elif url.endswith("/isoGroup"):
-            result["iso_group"] = extension.get("valueString", "")
+            result["iso_group"] = extension.get(
+                "valueString",
+                "",
+            )
 
         elif url.endswith("/deliveryDate"):
-            result["leveringsdato"] = extension.get("valueDate", "")
+            result["leveringsdato"] = extension.get(
+                "valueDate",
+                "",
+            )
 
     return result
 
 
-def _normaliser_ydelse(resource: dict) -> dict:
+def _normaliser_ydelse(
+    resource: dict,
+) -> dict:
     """
     Omdanner én ProcedureRequest til en læsevenlig dictionary.
 
     Output:
-        Dictionary med kendte felter fra Blue Prism samt hele den
-        oprindelige Cura-resource i raw_resource.
-    """
+        Dictionary med de eksisterende standardfelter samt:
 
-    extensions = resource.get("extension", [])
+        - performer_reference
+        - organization_id
+        - performer_name
+        - bemærkninger
+
+        Hele den oprindelige Cura-resource bevares i raw_resource.
+    """
+    extensions = resource.get(
+        "extension",
+        [],
+    )
 
     if not isinstance(extensions, list):
         extensions = []
 
-    period_extension = _find_extension(extensions, EXTENSION_PERIOD)
-    period = period_extension.get("valuePeriod", {})
+    period_extension = _find_extension(
+        extensions,
+        EXTENSION_PERIOD,
+    )
+
+    period = period_extension.get(
+        "valuePeriod",
+        {},
+    )
 
     if not isinstance(period, dict):
         period = {}
 
-    case_type_extension = _find_extension(extensions, EXTENSION_CASE_TYPE)
+    case_type_extension = _find_extension(
+        extensions,
+        EXTENSION_CASE_TYPE,
+    )
+
     paragraph_extension = _find_extension(
         extensions,
         EXTENSION_LEGAL_PARAGRAPH,
     )
-    rate_extension = _find_extension(extensions, EXTENSION_RATE)
-    rate_unit_extension = _find_extension(extensions, EXTENSION_RATE_UNIT)
-    meta_data = _get_meta_data(resource.get("meta", {}))
+
+    rate_extension = _find_extension(
+        extensions,
+        EXTENSION_RATE,
+    )
+
+    rate_unit_extension = _find_extension(
+        extensions,
+        EXTENSION_RATE_UNIT,
+    )
+
+    meta_data = _get_meta_data(
+        resource.get(
+            "meta",
+            {},
+        )
+    )
+
+    performer_data = _get_performer_data(
+        resource.get("performer")
+    )
 
     ydelse = {
-        "id": resource.get("id", ""),
+        "id": resource.get(
+            "id",
+            "",
+        ),
         "ydelsesnavn": _get_first_coding_value(
-            resource.get("code", {}),
+            resource.get(
+                "code",
+                {},
+            ),
             "display",
         ),
         "ydelseskode": _get_first_coding_value(
-            resource.get("code", {}),
+            resource.get(
+                "code",
+                {},
+            ),
             "code",
         ),
-        "sagstype": case_type_extension.get("valueString", ""),
-        "paragraf": paragraph_extension.get("valueString", ""),
-        "startdato": period.get("start", ""),
-        "slutdato": period.get("end", ""),
-        "status": resource.get("status", ""),
-        "organization_id": _get_reference_id(resource.get("performer")),
-        "takst": rate_extension.get("valueDecimal", ""),
-        "takstenhed": rate_unit_extension.get("valueCode", ""),
-        "oprettet_dato": meta_data.get("oprettet_dato", ""),
-        "oprettet_af": meta_data.get("oprettet_af", ""),
-        "borger_id": _get_reference_id(resource.get("subject")),
+        "sagstype": case_type_extension.get(
+            "valueString",
+            "",
+        ),
+        "paragraf": paragraph_extension.get(
+            "valueString",
+            "",
+        ),
+        "startdato": period.get(
+            "start",
+            "",
+        ),
+        "slutdato": period.get(
+            "end",
+            "",
+        ),
+        "status": resource.get(
+            "status",
+            "",
+        ),
+
+        # Nye performer-felter.
+        # organization_id bevarer samme navn som i den eksisterende kode.
+        "performer_reference": performer_data.get(
+            "performer_reference",
+            "",
+        ),
+        "organization_id": performer_data.get(
+            "organization_id",
+            "",
+        ),
+        "performer_name": performer_data.get(
+            "performer_name",
+            "",
+        ),
+
+        # Nyt normaliseret felt fra remark-extension.
+        "bemærkninger": _get_remark(
+            extensions
+        ),
+
+        "takst": rate_extension.get(
+            "valueDecimal",
+            "",
+        ),
+        "takstenhed": rate_unit_extension.get(
+            "valueCode",
+            "",
+        ),
+        "oprettet_dato": meta_data.get(
+            "oprettet_dato",
+            "",
+        ),
+        "oprettet_af": meta_data.get(
+            "oprettet_af",
+            "",
+        ),
+        "borger_id": _get_reference_id(
+            resource.get("subject")
+        ),
 
         # Hele den originale ProcedureRequest fra Cura bevares her.
         # Intet bliver gemt på disk.
         "raw_resource": resource,
     }
 
-    ydelse.update(_get_aid_data(extensions))
+    ydelse.update(
+        _get_aid_data(
+            extensions
+        )
+    )
 
     return ydelse
 
@@ -325,9 +614,13 @@ def borger_ydelser_hent(
                 {
                     "id": "ydelse-id",
                     "ydelsesnavn": "Ydelsesnavn",
-                    "status": "active",
+                    "status": "requested",
                     "startdato": "2026-01-01",
                     "slutdato": "",
+                    "performer_reference": "Organization/456",
+                    "organization_id": "456",
+                    "performer_name": "",
+                    "bemærkninger": "3593,70 Leverandør",
                     "raw_resource": {...},
                     ...
                 }
@@ -337,11 +630,15 @@ def borger_ydelser_hent(
     Funktionen gemmer ikke filer eller JSON.
     Outputtet består af almindelige Python-dictionaries og lister.
     """
-
-    borger_id = str(borger_id or "").strip()
+    borger_id = str(
+        borger_id
+        or ""
+    ).strip()
 
     if not borger_id:
-        raise ValueError("borger_id skal være udfyldt")
+        raise ValueError(
+            "borger_id skal være udfyldt"
+        )
 
     endpoint = (
         "ProcedureRequest"
@@ -350,7 +647,10 @@ def borger_ydelser_hent(
         "&_sort=orderedOn"
     )
 
-    data = get(endpoint, raw=raw)
+    data = get(
+        endpoint,
+        raw=raw,
+    )
 
     if raw:
         return data
@@ -371,24 +671,47 @@ def borger_ydelser_hent(
 
         # api_client.get() returnerer normalt Bundle.entry-listen.
         # Hvert element har derfor typisk et resource-felt.
-        resource = item.get("resource", item)
+        resource = item.get(
+            "resource",
+            item,
+        )
 
         if not isinstance(resource, dict):
             continue
 
-        resource_type = resource.get("resourceType")
+        resource_type = resource.get(
+            "resourceType"
+        )
 
-        if resource_type not in (None, "ProcedureRequest"):
+        if resource_type not in (
+            None,
+            "ProcedureRequest",
+        ):
             continue
 
-        result["ydelser"].append(_normaliser_ydelse(resource))
+        result["ydelser"].append(
+            _normaliser_ydelse(
+                resource
+            )
+        )
 
     # ISO-datoer kan sorteres som almindelig tekst.
     result["ydelser"].sort(
-        key=lambda ydelse: str(ydelse.get("startdato") or "")
+        key=lambda ydelse: str(
+            ydelse.get(
+                "startdato"
+            )
+            or ""
+        )
     )
 
-    result["antal_ydelser"] = len(result["ydelser"])
-    result["found"] = result["antal_ydelser"] > 0
+    result["antal_ydelser"] = len(
+        result["ydelser"]
+    )
+
+    result["found"] = (
+        result["antal_ydelser"]
+        > 0
+    )
 
     return result
