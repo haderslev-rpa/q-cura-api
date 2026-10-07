@@ -375,11 +375,17 @@ def get_communications_in_period(
     count: int = 1000,
     raw: bool = False,
 ) -> dict:
-    """
-    Henter Communications på tværs af borgere i en modtaget-periode.
+    """Henter én side Communications med oplysninger om næste side.
 
-    Vælg profil med message_type, fx "rehabilitation_plan", eller med
-    profile som en fuld CURA-profil-URL.
+    raw=True returnerer CURA-svaret uændret.
+    raw=False bevarer eksisterende felter og tilføjer:
+      bundle_entry_count: Antal entries i dette svar.
+      link_relations: Linktyper uden URL'er.
+      has_next: Om svaret annoncerer en næste side.
+
+    bundle_total er CURAs værdi, ikke et verificeret antal.
+    has_next=False er ikke i sig selv en garanti for fuldstændighed.
+    Funktionen henter ikke efterfølgende sider.
     """
     start = _validate_iso_datetime(received_from, "received_from")
     end = _validate_iso_datetime(received_to, "received_to")
@@ -401,17 +407,34 @@ def get_communications_in_period(
     bundle = get(endpoint, raw=True)
     if raw:
         return bundle
+    if not isinstance(bundle, dict):
+        raise RuntimeError("CURA returnerede ikke en dictionary.")
 
-    entries = bundle.get("entry", []) if isinstance(bundle, dict) else []
+    entries = bundle.get("entry", [])
+    links = bundle.get("link", [])
     if not isinstance(entries, list):
-        entries = []
+        raise RuntimeError("CURA Bundle.entry er ikke en liste.")
+    if not isinstance(links, list):
+        raise RuntimeError("CURA Bundle.link er ikke en liste.")
+
+    # Ukendt linkformat må ikke skjule en mulig næste side.
+    link_relations = []
+    for link in links:
+        if not isinstance(link, dict):
+            raise RuntimeError("Uventet linkformat i CURA-svaret.")
+        relation = link.get("relation")
+        if not isinstance(relation, str) or not relation.strip():
+            raise RuntimeError("CURA-link mangler relation.")
+        link_relations.append(relation.strip())
 
     communications = []
     for entry in entries:
         if not isinstance(entry, dict):
-            continue
+            raise RuntimeError("Uventet entry-format i CURA-svaret.")
         resource = entry.get("resource", {})
-        if isinstance(resource, dict) and resource.get("resourceType") == "Communication":
+        if not isinstance(resource, dict):
+            raise RuntimeError("Uventet resource-format i CURA-svaret.")
+        if resource.get("resourceType") == "Communication":
             communications.append(_normalise_communication(resource))
 
     communications.sort(
@@ -421,7 +444,10 @@ def get_communications_in_period(
     return {
         "found": bool(communications),
         "count": len(communications),
-        "bundle_total": bundle.get("total") if isinstance(bundle, dict) else None,
+        "bundle_total": bundle.get("total"),
+        "bundle_entry_count": len(entries),
+        "link_relations": link_relations,
+        "has_next": "next" in link_relations,
         "profile": resolved_profile,
         "received_from": start,
         "received_to": end,
