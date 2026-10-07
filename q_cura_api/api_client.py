@@ -199,22 +199,63 @@ def _auth_headers():
 # ✅ GET
 # -------------------------------------------------
 def get(endpoint: str, raw: bool = False):
+    """
+    Udfører et GET-kald mod CURA FHIR API.
+
+    Ved succes:
+        raw=True:
+            Returnerer hele JSON-svaret.
+
+        raw=False:
+            Returnerer Bundle.entry, hvis svaret er et FHIR Bundle.
+            Ellers returneres hele JSON-svaret.
+
+    Ved HTTP-fejl:
+        Kaster RuntimeError med:
+        - statuskode
+        - URL
+        - CURAs response body
+
+    Hemmelige tokens og credentials udskrives ikke.
+    """
     url = f"{BASE_URL}{endpoint}"
 
-    r = requests.get(url, headers=_auth_headers(), timeout=30)
+    response = requests.get(
+        url,
+        headers=_auth_headers(),
+        timeout=30,
+    )
 
-    #print("\n--- GET DEBUG ---")
-    #print("URL:", url)
-    #print("Status:", r.status_code)
+    if response.status_code >= 300:
+        response_text = response.text.strip()
 
-    r.raise_for_status()
+        if not response_text:
+            response_text = "<tomt svar fra CURA>"
 
-    data = r.json()
+        raise RuntimeError(
+            "CURA GET-kald fejlede.\n"
+            f"Statuskode: {response.status_code}\n"
+            f"URL: {url}\n"
+            f"Svar fra CURA:\n{response_text}"
+        )
+
+    try:
+        data = response.json()
+    except ValueError as error:
+        raise RuntimeError(
+            "CURA returnerede ikke gyldig JSON.\n"
+            f"Statuskode: {response.status_code}\n"
+            f"URL: {url}\n"
+            f"Svar fra CURA:\n{response.text}"
+        ) from error
 
     if raw:
         return data
 
-    if isinstance(data, dict) and isinstance(data.get("entry"), list):
+    if (
+        isinstance(data, dict)
+        and isinstance(data.get("entry"), list)
+    ):
         return data["entry"]
 
     return data
