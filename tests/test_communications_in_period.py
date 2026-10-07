@@ -26,7 +26,7 @@ def main():
 
     result = get_communications_in_period(
         received_from=(
-            "2026-10-01T00:00:00+02:00"
+            "2026-10-07T11:00:00+02:00"
         ),
         received_to=(
             "2026-10-07T23:59:59+02:00"

@@ -873,3 +873,52 @@ def update_rehabilitation_plan_subtype(
         ] = verified_resource
 
     return result
+
+def set_rehabilitation_plan_subtype(
+    communication_id: str,
+    subtype_code: str,
+) -> dict:
+    """Gemmer og verificerer undertypen på en genoptræningsplan.
+
+    Input:
+        communication_id:
+            Beskedens Communication-id.
+
+        subtype_code:
+            BASIC eller ADVANCED.
+
+    Output:
+        Returnerer resultatet fra opdateringen, blandt andet:
+            success
+            changed
+            verified
+            communication_id
+            old_subtype
+            new_subtype
+            stored_subtype
+
+    Funktionen:
+        - udfører en rigtig opdatering, ikke dry run
+        - printer ikke resultat eller beskedindhold
+        - bruger det allerede valgte CURA-miljø
+        - rejser en fejl, hvis resultatet ikke er verificeret
+    """
+    result = update_rehabilitation_plan_subtype(
+        communication_id=communication_id,
+        subtype_code=subtype_code,
+        expected_current_subtype=None,
+        dry_run=False,
+        raw=False,
+    )
+
+    if (
+        not isinstance(result, dict)
+        or result.get("success") is not True
+        or result.get("verified") is not True
+    ):
+        raise RuntimeError(
+            "Opdateringen af genoptræningsplanens undertype "
+            "blev ikke verificeret."
+        )
+
+    return result

@@ -1,88 +1,47 @@
 from pprint import pprint
 
-from q_cura_api.api_client import (
-    set_cura_credential,
-)
+from q_cura_api.api_client import set_cura_credential
 from q_cura_api.functionality.kommunikation import (
-    update_rehabilitation_plan_subtype,
+    set_rehabilitation_plan_subtype,
 )
 
-
-COMMUNICATION_ID = (
-    "de4cc915-353e-4011-"
-    "995a-5e1c069502c4"
-)
-
-# Ekstra sikkerhed.
-#
-# Testen foretager kun en rigtig PUT, hvis denne værdi
-# ændres manuelt til True.
-RUN_REAL_PUT = False
+# Opsætning for denne manuelle test.
+CURA_CREDENTIAL_NAME = "API_CURA"
+COMMUNICATION_ID = "9cfa0f85-431a-4625-8b72-6e610127c049"
+SUBTYPE_CODE = "BASIC"  # BASIC eller ADVANCED
 
 
 def main():
+    """Kalder produktionsfunktionen og viser resultatet.
+
+    OBS: Dette er en rigtig opdatering i det valgte CURA-miljø.
     """
-    Udfører en rigtig opdatering og verificerer resultatet.
+    set_cura_credential(CURA_CREDENTIAL_NAME)
 
-    Forløb:
-        1. Hent Communication.
-        2. Kontrollér nuværende subtype.
-        3. Ændr BASIC til ADVANCED.
-        4. Send hele ressourcen med PUT.
-        5. Hent ressourcen igen.
-        6. Kontrollér at den gemte subtype er ADVANCED.
-    """
-    if RUN_REAL_PUT is not True:
-        raise RuntimeError(
-            "Testen er stoppet med vilje. "
-            "Sæt RUN_REAL_PUT = True, hvis du "
-            "bevidst vil sende en PUT til CURA."
-        )
+    print(f"Ønsket undertype: {SUBTYPE_CODE}")
+    print("Kalder produktionsfunktionen med rigtig opdatering.")
 
-    set_cura_credential(
-        "API_CURA"
+    result = set_rehabilitation_plan_subtype(
+        communication_id=COMMUNICATION_ID,
+        subtype_code=SUBTYPE_CODE,
     )
 
-    result = (
-        update_rehabilitation_plan_subtype(
-            communication_id=(
-                COMMUNICATION_ID
-            ),
-            # ADVANCED vises som
-            # "Avanceret niveau" i CURA UI.
-            subtype_code="ADVANCED",
-            # PUT udføres kun, hvis den aktuelle
-            # værdi stadig er BASIC.
-            expected_current_subtype=(
-                "BASIC"
-            ),
-            dry_run=False,
-            raw=False,
-        )
-    )
-
-    print("")
+    print()
     print("=" * 100)
-    print("RESULTAT FRA PUT OG KONTROL-GET")
+    print("RESULTAT FRA PRODUKTIONSFUNKTIONEN")
     print("=" * 100)
+    pprint(result, width=180, sort_dicts=False)
 
-    pprint(
-        result,
-        width=180,
-        sort_dicts=False,
-    )
+    if (
+        result.get("verified") is not True
+        or result.get("stored_subtype") != SUBTYPE_CODE
+    ):
+        raise RuntimeError("Den ønskede undertype blev ikke verificeret.")
 
-    if result.get("verified") is not True:
-        raise RuntimeError(
-            "Opdateringen blev ikke verificeret."
-        )
-
-    print("")
-    print(
-        "Opdateringen er verificeret. "
-        "CURA returnerede den nye værdi ved "
-        "det efterfølgende GET-kald."
-    )
+    if result.get("changed") is True:
+        print("Undertypen blev ændret og verificeret i CURA.")
+    else:
+        print("Undertypen var allerede korrekt. Ingen PUT var nødvendig.")
 
 
 if __name__ == "__main__":
