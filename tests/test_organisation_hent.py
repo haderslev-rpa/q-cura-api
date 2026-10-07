@@ -12,7 +12,7 @@ print("\n🚀 TEST: SØG ORGANISATIONER")
 # --------------------------------------------------------
 # Kør søgning
 # --------------------------------------------------------
-result = get_organizations(TEST_SØGNING, raw=False, include_inactive=True)
+result = get_organizations(TEST_SØGNING, raw=True, include_inactive=True)
 
 # --------------------------------------------------------
 # Print resultat
