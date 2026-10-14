@@ -1,0 +1,315 @@
+# Teknisk forklaring til en AI: sammenhængen mellem borger, besked, opgave, mapping, forløb og ydelse i CURA
+
+## Formål
+
+Dette dokument beskriver den verificerede datamodel og referencekæde i CURA for en genoptræningsplan. Forklaringen er baseret på RAW-data hentet direkte fra CURAs FHIR API samt CURAs særlige mapping-visning.
+
+Målet er, at en anden AI kan forstå:
+
+1. hvilke ressourcer der indgår,
+2. hvordan ressourcerne refererer til hinanden,
+3. hvilken ressource der fungerer som bindeled,
+4. hvilke relationer der er direkte dokumenteret,
+5. hvordan relationerne bør hentes og normaliseres i Python,
+6. hvilke antagelser der ikke må foretages.
+
+## Ressourcer i eksemplet
+
+Borger:
+- Ressourcetype: Patient
+- ID: b8fd9b01-5d85-4794-b1a7-5cd3c8e27a03
+- FHIR-reference: Patient/b8fd9b01-5d85-4794-b1a7-5cd3c8e27a03
+
+Besked eller genoptræningsplan:
+- Ressourcetype: Communication
+- Profil: http://curafhir.dk/p/CuraRehabilitationPlan
+- ID: de4cc915-353e-4011-995a-5e1c069502c4
+- FHIR-reference: Communication/de4cc915-353e-4011-995a-5e1c069502c4
+
+Opgave:
+- Ressourcetype: Basic
+- Profil: http://curafhir.dk/p/CuraSimpleTask
+- ID: 3fec685d-9ce8-45a8-b980-9c64737be9da
+- FHIR-reference: Basic/3fec685d-9ce8-45a8-b980-9c64737be9da
+
+Mapping mellem besked og forløb:
+- Ressourcetype: Basic
+- Profil: http://curafhir.dk/p/RehabilitationPlanMapping
+- ID: c967c694-19f3-4b72-9903-c4318fef8fd4
+- FHIR-reference: Basic/c967c694-19f3-4b72-9903-c4318fef8fd4
+
+Forløb:
+- Ressourcetype: CarePlan
+- Profil: http://curafhir.dk/p/CuraCarePlan
+- ID: 4c63d090-4bb9-48f8-bdce-3c637126c7fb
+- FHIR-reference: CarePlan/4c63d090-4bb9-48f8-bdce-3c637126c7fb
+
+Ydelse:
+- Ressourcetype: ProcedureRequest
+- Profil: http://curafhir.dk/p/CuraGrantedProcedureRequest
+- ID: 9ebcc39c-4fe7-491e-8dd7-b2df19c3a2ba
+- FHIR-reference: ProcedureRequest/9ebcc39c-4fe7-491e-8dd7-b2df19c3a2ba
+
+## Overordnet model
+
+Den samlede referencekæde er:
+
+Opgave -> Besked <- RehabilitationPlanMapping -> Forløb <- Ydelse
+
+Borgeren er den fælles Patient-reference på ressourcerne.
+
+Det er vigtigt, at RehabilitationPlanMapping behandles som en selvstændig ressource. Beskeden indeholder ikke selv en direkte reference til forløbet eller ydelsen. Opgaven indeholder heller ikke en direkte reference til forløbet eller ydelsen. Mapping-ressourcen er broen mellem beskeden og forløbet.
+
+## Direkte relation 1: Opgave til besked
+
+Opgaven er en Basic-resource med profilen CuraSimpleTask.
+
+Feltet:
+
+Basic.subject.reference
+
+indeholder:
+
+Communication/de4cc915-353e-4011-995a-5e1c069502c4
+
+Det betyder:
+
+- Opgaven handler om den konkrete besked.
+- Besked-id'et kan udledes fra Basic.subject.reference.
+- Opgave-id'et er Basic.id.
+
+Den normaliserede relation bør være:
+
+- task_id = Basic.id
+- communication_reference = Basic.subject.reference
+- communication_id = sidste segment i Basic.subject.reference
+
+Opgaven har desuden borgerreferencen i extensionen:
+
+http://curafhir.dk/x/CuraSimpleTask/for
+
+med:
+
+valueReference.reference = Patient/b8fd9b01-5d85-4794-b1a7-5cd3c8e27a03
+
+## Direkte relation 2: Mapping til besked
+
+Mappingen er en Basic-resource med profilen:
+
+http://curafhir.dk/p/RehabilitationPlanMapping
+
+Extensionen:
+
+http://curafhir.dk/x/RehabilitationPlanMapping/rehabilitationPlan
+
+indeholder:
+
+valueReference.reference = Communication/de4cc915-353e-4011-995a-5e1c069502c4
+
+Det betyder:
+
+- Mappingen tilhører den konkrete genoptræningsplan eller besked.
+- communication_reference skal læses fra denne extension.
+- communication_id er sidste segment i referencen.
+
+## Direkte relation 3: Mapping til forløb
+
+På samme RehabilitationPlanMapping-resource findes extensionen:
+
+http://curafhir.dk/x/RehabilitationPlanMapping/relatesTo
+
+Den indeholder:
+
+valueReference.reference = CarePlan/4c63d090-4bb9-48f8-bdce-3c637126c7fb
+
+Det betyder:
+
+- Beskeden er koblet til det konkrete forløb via mapping-ressourcen.
+- care_plan_reference skal læses fra relatesTo-extensionen.
+- care_plan_id er sidste segment i referencen.
+
+Mappingen har også:
+
+http://curafhir.dk/x/RehabilitationPlanMapping/isActive
+
+med:
+
+valueBoolean = true
+
+Det betyder, at mappingen er aktiv. En implementering bør kontrollere dette felt og normalt kun anvende aktive mappings, medmindre historiske eller inaktive relationer udtrykkeligt ønskes.
+
+## Direkte relation 4: Ydelse til forløb
+
+Ydelsen er en ProcedureRequest med profilen CuraGrantedProcedureRequest.
+
+Extensionen:
+
+http://curafhir.dk/x/CuraGrantedProcedureRequest/pathway
+
+indeholder:
+
+valueReference.reference = CarePlan/4c63d090-4bb9-48f8-bdce-3c637126c7fb
+
+Det betyder:
+
+- Ydelsen ligger på det konkrete forløb.
+- pathway_reference skal læses fra denne extension.
+- care_plan_id er sidste segment i pathway_reference.
+
+## Borgerrelationen
+
+Borgeren er fælles reference på ressourcerne.
+
+På Communication, CarePlan, ProcedureRequest og RehabilitationPlanMapping ligger borgeren som:
+
+subject.reference = Patient/b8fd9b01-5d85-4794-b1a7-5cd3c8e27a03
+
+På CuraSimpleTask ligger borgeren i extensionen:
+
+http://curafhir.dk/x/CuraSimpleTask/for
+
+med:
+
+valueReference.reference = Patient/b8fd9b01-5d85-4794-b1a7-5cd3c8e27a03
+
+Borger-id'et må bruges til validering af, at ressourcerne tilhører samme borger. Borger-id'et må ikke alene bruges som bevis for, at en bestemt besked er koblet til et bestemt forløb eller en bestemt ydelse.
+
+## Den komplette verificerede kæde
+
+Trin 1:
+- Hent Basic/CuraSimpleTask.
+- Læs Basic.subject.reference.
+- Resultatet er Communication/<besked-id>.
+
+Trin 2:
+- Find eller hent Basic/RehabilitationPlanMapping for beskeden.
+- Læs extensionen RehabilitationPlanMapping/rehabilitationPlan.
+- Kontrollér, at den matcher Communication/<besked-id>.
+
+Trin 3:
+- Læs extensionen RehabilitationPlanMapping/relatesTo.
+- Resultatet er CarePlan/<forløbs-id>.
+
+Trin 4:
+- Hent CarePlan/<forløbs-id>.
+- Validér forløbets subject.reference mod borgeren.
+
+Trin 5:
+- Hent borgerens ProcedureRequest-ydelser.
+- Læs CuraGrantedProcedureRequest/pathway på hver ydelse.
+- En ydelse hører til forløbet, når pathway-reference er identisk med CarePlan/<forløbs-id>.
+
+Den logiske kæde bliver derfor:
+
+Basic/CuraSimpleTask
+  -> subject.reference
+Communication/CuraRehabilitationPlan
+  <- RehabilitationPlanMapping/rehabilitationPlan
+Basic/RehabilitationPlanMapping
+  -> RehabilitationPlanMapping/relatesTo
+CarePlan/CuraCarePlan
+  <- CuraGrantedProcedureRequest/pathway
+ProcedureRequest/CuraGrantedProcedureRequest
+
+## Anbefalet normaliseret mapping-objekt
+
+En RehabilitationPlanMapping kan normaliseres til følgende struktur:
+
+{
+    "mapping_id": "c967c694-19f3-4b72-9903-c4318fef8fd4",
+    "mapping_reference": "Basic/c967c694-19f3-4b72-9903-c4318fef8fd4",
+    "communication_reference": "Communication/de4cc915-353e-4011-995a-5e1c069502c4",
+    "communication_id": "de4cc915-353e-4011-995a-5e1c069502c4",
+    "care_plan_reference": "CarePlan/4c63d090-4bb9-48f8-bdce-3c637126c7fb",
+    "care_plan_id": "4c63d090-4bb9-48f8-bdce-3c637126c7fb",
+    "borger_reference": "Patient/b8fd9b01-5d85-4794-b1a7-5cd3c8e27a03",
+    "borger_id": "b8fd9b01-5d85-4794-b1a7-5cd3c8e27a03",
+    "is_active": true,
+    "raw_resource": {}
+}
+
+## Anbefalede konstanter
+
+PROFILE_REHABILITATION_PLAN_MAPPING =
+http://curafhir.dk/p/RehabilitationPlanMapping
+
+EXTENSION_REHABILITATION_PLAN =
+http://curafhir.dk/x/RehabilitationPlanMapping/rehabilitationPlan
+
+EXTENSION_RELATES_TO =
+http://curafhir.dk/x/RehabilitationPlanMapping/relatesTo
+
+EXTENSION_IS_ACTIVE =
+http://curafhir.dk/x/RehabilitationPlanMapping/isActive
+
+## Regler for sikker sammenligning
+
+En relation må kun markeres som direkte verificeret, når en faktisk FHIR-reference matcher.
+
+Korrekte direkte kontroller:
+
+1. Opgave til besked:
+   task.communication_reference == f"Communication/{communication_id}"
+
+2. Mapping til besked:
+   mapping.communication_reference == f"Communication/{communication_id}"
+
+3. Mapping til forløb:
+   mapping.care_plan_reference == f"CarePlan/{care_plan_id}"
+
+4. Ydelse til forløb:
+   ydelse.pathway_reference == f"CarePlan/{care_plan_id}"
+
+5. Samme borger:
+   Alle normaliserede borger-id'er skal være identiske.
+
+Datoer, organisationer, behandlere og samtidige opdateringer kan understøtte en arbejdsgang, men må ikke erstatte de direkte id-referencer.
+
+## Vigtige skel
+
+Der findes to forskellige Basic-profiler i kæden:
+
+1. CuraSimpleTask
+   - Repræsenterer opgaven.
+   - Kobler opgaven til beskeden via Basic.subject.reference.
+   - Kobler opgaven til borgeren via CuraSimpleTask/for.
+
+2. RehabilitationPlanMapping
+   - Repræsenterer selve koblingen mellem besked og forløb.
+   - Kobler til beskeden via RehabilitationPlanMapping/rehabilitationPlan.
+   - Kobler til forløbet via RehabilitationPlanMapping/relatesTo.
+   - Angiver aktiv status via RehabilitationPlanMapping/isActive.
+
+De to Basic-profiler må ikke blandes sammen.
+
+## Hvordan mappingen blev identificeret
+
+CURAs brugergrænseflade kaldte endpointet:
+
+/rehabilitationplan/mapping
+
+Responsen viste et mapping-id af typen Basic. Det konkrete mapping-id kunne derefter hentes via den almindelige FHIR-integration som:
+
+Basic/c967c694-19f3-4b72-9903-c4318fef8fd4
+
+Den hentede ressource havde profilen RehabilitationPlanMapping og indeholdt de eksplicitte referencer til Communication og CarePlan.
+
+Det betyder, at den varige datamodel kan læses gennem FHIR API'et, når mapping-resource-id'et er kendt. UI-endpointet var nyttigt til at identificere mapping-ressourcen, men selve Basic-ressourcen kan hentes med den eksisterende FHIR-klient.
+
+## Hvad en implementering stadig skal afklare
+
+Den konkrete mapping-resource kan hentes direkte med Basic/<mapping-id>. Den generelle søgemetode til at finde alle RehabilitationPlanMapping-resurser for en borger eller besked skal verificeres særskilt mod CURAs understøttede profilspecifikke søgeparametre.
+
+En implementering må derfor ikke opfinde et søgeparameter. Den skal enten:
+
+- bruge et dokumenteret CURA-opslag for RehabilitationPlanMapping,
+- bruge et mapping-id, som allerede er fundet,
+- eller analysere det fungerende UI-kald for at se den præcise søgemekanisme.
+
+## Endelig konklusion
+
+Den korrekte datamodel er ikke en enkelt lineær reference direkte fra besked til ydelse. Modellen består af to kæder, som mødes omkring forløbet:
+
+Opgave -> Besked <- RehabilitationPlanMapping -> Forløb <- Ydelse
+
+RehabilitationPlanMapping er det afgørende bindeled mellem beskeden og forløbet. Ydelsen forbindes til samme forløb gennem pathway-extensionen. Opgaven forbindes til beskeden gennem subject.reference. Borgeren er fælles valideringsreference på alle dele af kæden.

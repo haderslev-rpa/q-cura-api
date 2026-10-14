@@ -1,0 +1,134 @@
+{
+  "resourceType": "ProcedureRequest",
+  "meta": {
+    "profile": [
+      "http://curafhir.dk/p/CuraGrantedProcedureRequest"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://curafhir.dk/x/ServiceVariant",
+      "valueCodeableConcept": {
+        "text": "Ortopaedisk"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/householdService",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/legalParagraph",
+      "valueString": "§140"
+    },
+    {
+      "url": "http://curafhir.dk/x/AmountType",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/AmountType/frequency",
+          "valueInteger": 0
+        },
+        {
+          "url": "http://curafhir.dk/x/AmountType/amount",
+          "valueInteger": 1
+        },
+        {
+          "url": "http://curafhir.dk/x/AmountType/type",
+          "valueCode": "grant_activities_amount_type_number_of_times"
+        },
+        {
+          "url": "http://curafhir.dk/x/AmountType/duration",
+          "valueInteger": 0
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/planningSystem",
+      "valueCode": "Booking"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/activityCategory",
+      "valueCode": "standard_activity"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/period",
+      "valuePeriod": {
+        "start": "REPLACE"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/delegationAllowed",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/competency",
+      "valueCode": "No competence"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/showTargetGroup",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/showPrices",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/previousOrderedVersions",
+      "valueInteger": 0
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/pathway",
+      "valueReference": {
+        "reference": "CarePlan/REPLACE"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/caseType",
+      "valueString": "RehabilitationSUL"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/householdServiceAllowed",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/providerGroupName",
+      "valueString": "genop"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/transportationRightAllowed",
+      "valueBoolean": true
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/transportationRight",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/showRateLevel",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/needsConsent",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/citizenFacedName",
+      "valueString": "Opstart genoptraening"
+    }
+  ],
+  "subject": {
+    "reference": "Patient/REPLACE"
+  },
+  "code": {
+    "coding": [
+      {
+        "system": "http://kl.dk/cs/FSIIITrainingActivities",
+        "code": "opstart140",
+        "display": "Opstartssamtale §140"
+      }
+    ]
+  },
+  "performer": {
+    "reference": "Organization/REPLACE"
+  },
+  "status": "requested",
+  "orderedOn": "REPLACE"
+}

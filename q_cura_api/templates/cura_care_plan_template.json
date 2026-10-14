@@ -1,0 +1,60 @@
+{
+  "resourceType": "CarePlan",
+  "meta": {
+    "profile": [
+      "http://curafhir.dk/p/CuraCarePlan"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/name",
+      "valueString": "Genoptraeningsforloeb §140"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/paragraph",
+      "valueString": "§140"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/supplier",
+      "valueReference": {
+        "reference": "Organization/REPLACE"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Ortopaedisk"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/caseType",
+      "valueString": "RehabilitationSUL"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/transportationRightAllowed",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/transportationRight",
+      "valueBoolean": false
+    }
+  ],
+  "subject": {
+    "reference": "Patient/REPLACE"
+  },
+  "status": "draft",
+  "period": {
+    "start": "REPLACE"
+  }
+}
