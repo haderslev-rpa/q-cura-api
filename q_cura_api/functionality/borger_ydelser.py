@@ -30,6 +30,10 @@ EXTENSION_REMARK = (
 EXTENSION_SERVICE_VARIANT = (
     "http://curafhir.dk/x/ServiceVariant"
 )
+EXTENSION_PATHWAY = (
+    "http://curafhir.dk/x/"
+    "CuraGrantedProcedureRequest/pathway"
+)
 
 
 # ------------------------------------------------------------
@@ -102,6 +106,7 @@ def _get_service_variant(
         variant_display
         or ""
     ).strip()
+
 
 
 
@@ -494,6 +499,67 @@ def _get_aid_data(
 
     return result
 
+def _get_pathway_data(
+    extensions: list,
+) -> dict:
+    """
+    Henter relationen mellem en ydelse og dens CuraCarePlan.
+
+    CURA gemmer relationen som:
+
+        {
+            "url": (
+                "http://curafhir.dk/x/"
+                "CuraGrantedProcedureRequest/pathway"
+            ),
+            "valueReference": {
+                "reference": "CarePlan/<id>"
+            }
+        }
+
+    Returnerer:
+        {
+            "pathway_reference": "CarePlan/<id>",
+            "care_plan_id": "<id>",
+        }
+
+    Hvis ydelsen ikke er knyttet til et forløb, returneres
+    tomme tekstværdier.
+    """
+    pathway_extension = _find_extension(
+        extensions,
+        EXTENSION_PATHWAY,
+    )
+
+    value_reference = pathway_extension.get(
+        "valueReference",
+        {},
+    )
+
+    if not isinstance(value_reference, dict):
+        value_reference = {}
+
+    pathway_reference = value_reference.get(
+        "reference",
+        "",
+    )
+
+    if not isinstance(pathway_reference, str):
+        pathway_reference = ""
+
+    care_plan_id = ""
+
+    if pathway_reference.startswith("CarePlan/"):
+        care_plan_id = pathway_reference.split(
+            "/",
+            maxsplit=1,
+        )[1]
+
+    return {
+        "pathway_reference": pathway_reference,
+        "care_plan_id": care_plan_id,
+    }
+
 
 def _normaliser_ydelse(
     resource: dict,
@@ -659,6 +725,10 @@ def _normaliser_ydelse(
         )
     )
 
+    pathway_data = _get_pathway_data(
+    extensions
+    )
+
     # --------------------------------------------------------
     # NORMALISERET YDELSE
     # --------------------------------------------------------
@@ -721,6 +791,20 @@ def _normaliser_ydelse(
         "status": resource.get(
             "status",
             "",
+        ),
+
+        "pathway_reference": (
+            pathway_data.get(
+                "pathway_reference",
+                "",
+            )
+        ),
+
+        "care_plan_id": (
+            pathway_data.get(
+                "care_plan_id",
+                "",
+            )
         ),
 
         # Performer-oplysninger.
