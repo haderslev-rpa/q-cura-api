@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from urllib.parse import urlencode
 
-from q_cura_api.api_client import get
+from q_cura_api.api_client import get, put
 
 
 # ------------------------------------------------------------
@@ -405,3 +405,38 @@ def get_tasks_for_communication(
         "borger_reference": f"Patient/{validated_borger_id}",
         "tasks": returned_tasks,
     }
+
+
+# ------------------------------------------------------------
+# 4. ÆNDR OPGAVENS ORGANISATION
+# ------------------------------------------------------------
+def update_task_managing_organization(
+    task_id: str,
+    organization_id: str,
+    *,
+    raw: bool = False,
+):
+    """Ændrer managingOrganization på en eksisterende CuraSimpleTask."""
+    task_id = _required_text(task_id, "task_id")
+    organization_id = _required_text(organization_id, "organization_id")
+
+    resource = get(f"Basic/{task_id}", raw=True)
+    if not _is_cura_simple_task(resource):
+        raise ValueError("Ressourcen er ikke en CuraSimpleTask")
+
+    extension = _find_extension(resource, EXTENSION_MANAGING_ORGANIZATION)
+    if not extension:
+        raise ValueError("Opgaven mangler managingOrganization-extensionen")
+
+    extension["valueReference"] = {
+        "reference": f"Organization/{organization_id}"
+    }
+
+    put(f"Basic/{task_id}", resource, raw=False)
+    verified = get(f"Basic/{task_id}", raw=True)
+    normalized = _normalise_task(verified)
+
+    if normalized["managing_organization_id"] != organization_id:
+        raise RuntimeError("Opgavens organisation blev ikke ændret som forventet")
+
+    return verified if raw else normalized

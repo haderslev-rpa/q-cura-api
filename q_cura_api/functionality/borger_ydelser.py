@@ -1,4 +1,4 @@
-from q_cura_api.api_client import get
+from q_cura_api.api_client import get, post, put
 
 
 # ------------------------------------------------------------
@@ -1013,3 +1013,82 @@ def borger_ydelser_hent(
     )
 
     return result
+
+
+# ------------------------------------------------------------
+# OPRET OG OPDATÉR YDELSE
+# ------------------------------------------------------------
+EXTENSION_PATHWAY = (
+    "http://curafhir.dk/x/CuraGrantedProcedureRequest/pathway"
+)
+
+
+def get_ydelse_by_id(ydelse_id: str, raw: bool = False):
+    ydelse_id = str(ydelse_id or "").strip()
+    if not ydelse_id:
+        raise ValueError("ydelse_id skal være udfyldt")
+    resource = get(f"ProcedureRequest/{ydelse_id}", raw=True)
+    return resource if raw else _normaliser_ydelse(resource)
+
+
+def build_ydelse(
+    template_resource: dict,
+    borger_id: str,
+    forloeb_id: str,
+    performer_organization_id: str,
+) -> dict:
+    """Bygger en ny ydelse fra en godkendt standard-resource."""
+    import copy
+    body = copy.deepcopy(template_resource)
+    for field in ("id",):
+        body.pop(field, None)
+    meta = body.get("meta") if isinstance(body.get("meta"), dict) else {}
+    for field in ("versionId", "lastUpdated", "extension"):
+        meta.pop(field, None)
+    body["meta"] = meta
+    body["subject"] = {"reference": f"Patient/{borger_id}"}
+    body["performer"] = {
+        "reference": f"Organization/{performer_organization_id}"
+    }
+    pathway = _find_extension(body.get("extension") or [], EXTENSION_PATHWAY)
+    if not pathway:
+        raise ValueError("Standard-ydelsen mangler pathway-extensionen")
+    pathway["valueReference"] = {"reference": f"CarePlan/{forloeb_id}"}
+    return body
+
+
+def create_ydelse(
+    template_resource: dict,
+    borger_id: str,
+    forloeb_id: str,
+    performer_organization_id: str,
+    *,
+    raw: bool = False,
+):
+    body = build_ydelse(
+        template_resource,
+        borger_id,
+        forloeb_id,
+        performer_organization_id,
+    )
+    created = post("ProcedureRequest", body, raw=False)
+    return created if raw else _normaliser_ydelse(created)
+
+
+def update_ydelse_forloeb(
+    ydelse_id: str,
+    forloeb_id: str,
+    *,
+    raw: bool = False,
+):
+    resource = get(f"ProcedureRequest/{ydelse_id}", raw=True)
+    pathway = _find_extension(resource.get("extension") or [], EXTENSION_PATHWAY)
+    if not pathway:
+        raise ValueError("Ydelsen mangler pathway-extensionen")
+    pathway["valueReference"] = {"reference": f"CarePlan/{forloeb_id}"}
+    put(f"ProcedureRequest/{ydelse_id}", resource, raw=False)
+    verified = get(f"ProcedureRequest/{ydelse_id}", raw=True)
+    normalized = _normaliser_ydelse(verified)
+    if normalized.get("pathway_id") != forloeb_id:
+        raise RuntimeError("Ydelsen peger ikke på det forventede forløb")
+    return verified if raw else normalized

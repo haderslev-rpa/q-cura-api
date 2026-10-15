@@ -262,30 +262,137 @@ def get(endpoint: str, raw: bool = False):
 
 
 # -------------------------------------------------
-# ✅ POST
+# POST
 # -------------------------------------------------
-def post(endpoint: str, body: dict, raw: bool = False):
+def post(
+    endpoint: str,
+    body: dict,
+    raw: bool = False,
+):
+    """
+    Udfører et POST-kald mod CURA FHIR API.
+
+    CURA kan returnere et blankt response body ved
+    en vellykket oprettelse.
+
+    Det nye resource-id kan i stedet ligge i HTTP-headeren:
+
+        Location
+
+    Ved raw=True returneres altid:
+
+        {
+            "success": True,
+            "status_code": 201,
+            "location": "...",
+            "data": {...} eller None,
+        }
+
+    Ved raw=False:
+
+        Hvis CURA returnerer JSON:
+            Returneres JSON-data direkte.
+
+        Hvis CURA returnerer blank body:
+            Returneres statuskode og Location-header.
+
+    Hemmelige tokens og credentials udskrives ikke.
+    """
     url = f"{BASE_URL}{endpoint}"
 
-    r = requests.post(
+    response = requests.post(
         url,
-        headers={**_auth_headers(), "Content-Type": "application/json"},
+        headers={
+            **_auth_headers(),
+            "Content-Type": "application/json",
+        },
         json=body,
         timeout=30,
     )
 
-    #print("\n--- POST DEBUG ---")
-    #print("Status:", r.status_code)
+    response_text = response.text.strip()
 
-    r.raise_for_status()
+    if response.status_code >= 300:
+        if not response_text:
+            response_text = "<tomt svar fra CURA>"
 
-    if not r.text.strip():
-        return {"success": True, "status_code": r.status_code}
+        raise RuntimeError(
+            "CURA POST-kald fejlede.\n"
+            f"Statuskode: {response.status_code}\n"
+            f"URL: {url}\n"
+            f"Svar fra CURA:\n{response_text}"
+        )
 
-    try:
-        return r.json() if not raw else {"data": r.json()}
-    except:
-        return {"success": True, "data": r.text, "status_code": r.status_code}
+    # -------------------------------------------------
+    # Hent relevante response headers
+    # -------------------------------------------------
+
+    location = str(
+        response.headers.get("Location")
+        or ""
+    ).strip()
+
+    content_location = str(
+        response.headers.get("Content-Location")
+        or ""
+    ).strip()
+
+    etag = str(
+        response.headers.get("ETag")
+        or ""
+    ).strip()
+
+    # -------------------------------------------------
+    # Forsøg kun JSON-læsning, hvis body ikke er blank
+    # -------------------------------------------------
+
+    data = None
+
+    if response_text:
+        try:
+            data = response.json()
+
+        except ValueError:
+            data = None
+
+    # -------------------------------------------------
+    # RAW output
+    # -------------------------------------------------
+
+    if raw:
+        return {
+            "success": True,
+            "status_code": response.status_code,
+            "location": location,
+            "content_location": content_location,
+            "etag": etag,
+            "data": data,
+            "response_text": (
+                ""
+                if data is not None
+                else response_text
+            ),
+        }
+
+    # -------------------------------------------------
+    # Normalt output når CURA returnerer JSON
+    # -------------------------------------------------
+
+    if isinstance(data, dict):
+        return data
+
+    # -------------------------------------------------
+    # Normalt output når CURA returnerer blank body
+    # -------------------------------------------------
+
+    return {
+        "success": True,
+        "status_code": response.status_code,
+        "location": location,
+        "content_location": content_location,
+        "etag": etag,
+        "data": None,
+    }
 
 
 # -------------------------------------------------

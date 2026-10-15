@@ -1,0 +1,140 @@
+{
+  "resourceType": "CarePlan",
+  "meta": {
+    "profile": [
+      "http://curafhir.dk/p/CuraCarePlan"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/name",
+      "valueString": "Genoptræningsforløb §140"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/paragraph",
+      "valueString": "§140"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/referredFrom",
+      "valueString": "INDSAET_HENVIST_FRA"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/remark",
+      "valueString": "INDSAET_BEMAERKNING"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Ortopædisk"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Medicinsk"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Neurologisk"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Psykiatrisk"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Kræft"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/caseType",
+      "valueString": "RehabilitationSUL"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/transportationRightAllowed",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/transportationRight",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/followUpDate",
+      "valueDateTime": "INDSAET_OPFOELGNINGSDATO"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/responsibleFollowupOrganization",
+      "valueReference": {
+        "reference": "Organization/INDSAET_OPFOELGNINGSORGANISATION_ID"
+      }
+    }
+  ],
+  "subject": {
+    "reference": "Patient/INDSAET_BORGER_ID"
+  },
+  "status": "proposed",
+  "period": {
+    "start": "INDSAET_START_DATETIME"
+  }
+}
