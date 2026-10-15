@@ -7,8 +7,8 @@ from q_cura_api.api_client import (
     set_cura_credential,
 )
 
-CURA_CREDENTIAL = "API_CURA_TEST"
-BORGER_ID = "0f5403d0-1575-4e9c-842e-d399ff55198a"
+CURA_CREDENTIAL = "API_CURA"
+BORGER_ID = "39dde427-b1fc-42b3-9e85-fccf727ee3bf"
 
 CARE_PLAN_PROFILE = (
     "http://curafhir.dk/p/CuraCarePlan"

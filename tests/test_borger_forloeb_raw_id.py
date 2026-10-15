@@ -12,10 +12,10 @@ from q_cura_api.api_client import (
 # KONFIGURATION
 # ------------------------------------------------------------
 
-CURA_CREDENTIAL = "API_CURA_TEST"
+CURA_CREDENTIAL = "API_CURA"
 
 FORLOEB_ID = (
-    "07ca5b1e-0814-4259-89e0-59093fd029bb"
+    "4c63d090-4bb9-48f8-bdce-3c637126c7fb"
 )
 
 OUTPUT_FOLDER = Path(

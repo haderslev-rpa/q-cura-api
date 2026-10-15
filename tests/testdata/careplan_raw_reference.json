@@ -1,0 +1,197 @@
+{
+  "resourceType": "CarePlan",
+  "id": "4c63d090-4bb9-48f8-bdce-3c637126c7fb",
+  "meta": {
+    "versionId": "2",
+    "lastUpdated": "2026-06-26T09:08:27.491+02:00",
+    "profile": [
+      "http://curafhir.dk/p/CuraCarePlan"
+    ],
+    "security": [
+      {
+        "system": "http://curafhir.dk/cs/SecurityOrgLabel",
+        "code": "Uskærmet"
+      }
+    ],
+    "extension": [
+      {
+        "url": "http://curafhir.dk/x/meta/systemCreatedTimestamp",
+        "extension": [
+          {
+            "url": "http://curafhir.dk/x/CuraTimestamp/instant",
+            "valueInstant": "2026-06-26T09:08:00.838+02:00"
+          },
+          {
+            "url": "http://curafhir.dk/x/CuraTimestamp/organization",
+            "valueReference": {
+              "reference": "Organization/ce4c97f5-e3a9-4ea3-94b2-84b0d0fd24d5"
+            }
+          },
+          {
+            "url": "http://curafhir.dk/x/CuraTimestamp/user",
+            "valueReference": {
+              "reference": "Practitioner/dimstb"
+            }
+          },
+          {
+            "url": "http://curafhir.dk/x/CuraTimestamp/practitionerRole",
+            "valueCoding": {
+              "system": "http://curafhir.dk/cs/PractitionerRole",
+              "code": "Myndighed hjælpemidler",
+              "display": "Sagsbehandler Hjælpemidler"
+            }
+          }
+        ]
+      },
+      {
+        "url": "http://curafhir.dk/x/meta/systemUpdatedTimestamp",
+        "extension": [
+          {
+            "url": "http://curafhir.dk/x/CuraTimestamp/instant",
+            "valueInstant": "2026-06-26T09:08:27.491+02:00"
+          },
+          {
+            "url": "http://curafhir.dk/x/CuraTimestamp/organization",
+            "valueReference": {
+              "reference": "Organization/ce4c97f5-e3a9-4ea3-94b2-84b0d0fd24d5"
+            }
+          },
+          {
+            "url": "http://curafhir.dk/x/CuraTimestamp/user",
+            "valueReference": {
+              "reference": "Practitioner/dimstb"
+            }
+          },
+          {
+            "url": "http://curafhir.dk/x/CuraTimestamp/practitionerRole",
+            "valueCoding": {
+              "system": "http://curafhir.dk/cs/PractitionerRole",
+              "code": "Myndighed hjælpemidler",
+              "display": "Sagsbehandler Hjælpemidler"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/name",
+      "valueString": "Genoptræningsforløb §140"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/paragraph",
+      "valueString": "§140"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/supplier",
+      "valueReference": {
+        "reference": "Organization/f5aad9b3-15ab-4f7d-8de3-1037883dd708"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Ortopædisk"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Neurologisk"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Medicinsk"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Psykiatrisk"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/activityType",
+          "valueCoding": {
+            "system": "http://kl.dk/cs/FSIIITrainingActivities",
+            "code": "opstart140",
+            "display": "Opstartssamtale §140"
+          }
+        },
+        {
+          "url": "http://curafhir.dk/x/CuraPathwayActivityConfiguration/variant",
+          "valueString": "Kræft"
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/caseType",
+      "valueString": "RehabilitationSUL"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/transportationRightAllowed",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraCarePlan/transportationRight",
+      "valueBoolean": false
+    }
+  ],
+  "subject": {
+    "reference": "Patient/b8fd9b01-5d85-4794-b1a7-5cd3c8e27a03"
+  },
+  "status": "draft",
+  "period": {
+    "start": "2026-06-26T00:00:00+02:00"
+  }
+}

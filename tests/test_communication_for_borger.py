@@ -16,7 +16,7 @@ from q_cura_api.api_client import (
 CURA_CREDENTIAL = "API_CURA"
 
 BORGER_ID = (
-    "b8fd9b01-5d85-4794-b1a7-5cd3c8e27a03"
+    "39dde427-b1fc-42b3-9e85-fccf727ee3bf"
 )
 
 COUNT = 1000

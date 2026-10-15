@@ -25,9 +25,10 @@ from q_cura_api.functionality.plan_mapping_opret import (
 CURA_CREDENTIAL = "API_CURA"
 
 # Alle id'er angives uden resourceType-prefix.
-BORGER_ID = "INDSAET_PATIENT_ID"
-COMMUNICATION_ID = "INDSAET_COMMUNICATION_ID"
-CARE_PLAN_ID = "INDSAET_CARE_PLAN_ID"
+BORGER_ID = "39dde427-b1fc-42b3-9e85-fccf727ee3bf"#"b8fd9b01-5d85-4794-b1a7-5cd3c8e27a03" # 
+COMMUNICATION_ID = "1115526a-6419-40ef-9380-95555142cbe1" #"de4cc915-353e-4011-995a-5e1c069502c4" #
+CARE_PLAN_ID = "8517030a-84d4-45ec-8481-87a9c5b3cc5f" #"4c63d090-4bb9-48f8-bdce-3c637126c7fb" #
+
 
 # Udfyld kun hvis mapping-id'et allerede kendes.
 EXISTING_MAPPING_ID = None
