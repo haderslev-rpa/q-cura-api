@@ -1,0 +1,37 @@
+{
+  "resourceType": "Basic",
+  "meta": {
+    "profile": [
+      "http://curafhir.dk/p/RehabilitationPlanMapping"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://curafhir.dk/x/RehabilitationPlanMapping/rehabilitationPlan",
+      "valueReference": {
+        "reference": "Communication/INDSAET_PLAN_ID"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/RehabilitationPlanMapping/relatesTo",
+      "valueReference": {
+        "reference": "CarePlan/INDSAET_TARGET_ID"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/RehabilitationPlanMapping/isActive",
+      "valueBoolean": true
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://curafhir.dk/p",
+        "code": "RehabilitationPlanMapping"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/INDSAET_BORGER_ID"
+  }
+}

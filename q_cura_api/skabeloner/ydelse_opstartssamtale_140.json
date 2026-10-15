@@ -1,0 +1,150 @@
+{
+  "resourceType": "ProcedureRequest",
+  "meta": {
+    "profile": [
+      "http://curafhir.dk/p/CuraGrantedProcedureRequest"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/followUpDate",
+      "valueDateTime": "INDSAET_OPFOELGNINGSDATO"
+    },
+    {
+      "url": "http://curafhir.dk/x/ServiceVariant",
+      "valueCodeableConcept": {
+        "text": "INDSAET_VARIANT"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/householdService",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/legalParagraph",
+      "valueString": "§140"
+    },
+    {
+      "url": "http://curafhir.dk/x/AmountType",
+      "extension": [
+        {
+          "url": "http://curafhir.dk/x/AmountType/frequency",
+          "valueInteger": 0
+        },
+        {
+          "url": "http://curafhir.dk/x/AmountType/amount",
+          "valueInteger": 1
+        },
+        {
+          "url": "http://curafhir.dk/x/AmountType/type",
+          "valueCode": "grant_activities_amount_type_number_of_times"
+        },
+        {
+          "url": "http://curafhir.dk/x/AmountType/duration",
+          "valueInteger": 0
+        }
+      ]
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/planningSystem",
+      "valueCode": "Booking"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/activityCategory",
+      "valueCode": "standard_activity"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/period",
+      "valuePeriod": {
+        "start": "INDSAET_START_DATETIME"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/delegationAllowed",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/competency",
+      "valueCode": "No competence"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/showTargetGroup",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/showDecisiveFactor",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/showPrices",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/pathway",
+      "valueReference": {
+        "reference": "CarePlan/INDSAET_FORLOEB_ID"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/responsibleFollowupOrganization",
+      "valueReference": {
+        "reference": "Organization/INDSAET_OPFOELGNINGSORGANISATION_ID"
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/caseType",
+      "valueString": "RehabilitationSUL"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/householdServiceAllowed",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/providerGroupName",
+      "valueString": "sund"
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/transportationRightAllowed",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/transportationRight",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/showRateLevel",
+      "valueBoolean": false
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/needsConsent",
+      "valueBoolean": true
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/attachment",
+      "valueAttachment": {
+        "size": 0
+      }
+    },
+    {
+      "url": "http://curafhir.dk/x/CuraGrantedProcedureRequest/citizenFacedName",
+      "valueString": "Opstart genoptræning"
+    }
+  ],
+  "subject": {
+    "reference": "Patient/INDSAET_BORGER_ID"
+  },
+  "code": {
+    "coding": [
+      {
+        "system": "http://kl.dk/cs/FSIIITrainingActivities",
+        "code": "opstart140",
+        "display": "Opstartssamtale §140"
+      }
+    ]
+  },
+  "performer": {
+    "reference": "Organization/INDSAET_LEVERANDOER_ID"
+  },
+  "status": "requested",
+  "orderedOn": "INDSAET_ORDERED_ON_DATETIME"
+}
